@@ -27,7 +27,7 @@
  */
 
 #define OTBR_LOG_TAG "RCP_HOST"
-#define DATASET_CONFIG_FILE "./dataset.yml"
+#define DATASET_CONFIG_FILE "./home/pi/dataset.yml"
 
 #include "ncp/rcp_host.hpp"
 
