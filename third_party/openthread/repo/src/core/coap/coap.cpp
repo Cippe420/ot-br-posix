@@ -29,6 +29,7 @@
 #include "coap.hpp"
 
 #include "instance/instance.hpp"
+#include "common/database.hpp"
 
 /**
  * @file
@@ -1285,6 +1286,8 @@ void CoapBase::ProcessReceivedRequest(Message &aMessage, const Ip6::MessageInfo 
     uint8_t          blockOptionType   = 0;
     uint32_t         totalTransferSize = 0;
 #endif
+    char name[] = "/home/pi/coap.db"; 
+    DatabaseL db(name);
 
     if (mInterceptor.IsSet())
     {
@@ -1415,11 +1418,61 @@ void CoapBase::ProcessReceivedRequest(Message &aMessage, const Ip6::MessageInfo 
         ExitNow();
     }
 
+
+
     for (const Resource &resource : mResources)
     {
+        // iterate through all the normal resource (not blockwise)
         if (StringMatch(resource.mUriPath, uriPath))
         {
+
+            
+            LogInfo("matchato thermostat\n");
+
+            if(db.connect()){
+
+                char data[] = "dato";
+                LogInfo("sto provando ad inserire i dati nel database");
+                db.InsertData(data);
+
+            }
+
+            // from message.cpp / message.hpp
+            uint8_t aBuf[aMessage.GetLength()];
+            uint16_t bytesread = aMessage.ReadBytes(0,aBuf,aMessage.GetLength());
+
+            struct receivedPayload{
+                // maybe not uint8
+                uint8_t eui;
+                float pktnum;
+                float timestamp;
+                float undef;
+                float temperature;
+                float humidity;
+                float ir;
+                float vis;
+                float batt;
+                // need the average of those,really
+                float temperature2[10];
+                float humidity2[10];
+                float pressure[10];
+                float gas_resistance[10];
+
+            }receivedPayload;
+
+            if (bytesread != 0)
+            {
+                for (size_t i = 0; i < sizeof(aBuf); i++) // Usa sizeof(aBuf) per ottenere la dimensione in byte
+                {
+
+                    // extract the payload and cast
+                    LogInfo("Byte #%zu: 0x%02X\n", i, aBuf[i]); // Stampa in formato esadecimale
+                }
+            }
+
+            // match the uripath, invoke the handler for given resource
             resource.HandleRequest(aMessage, aMessageInfo);
+
             error = kErrorNone;
             ExitNow();
         }
@@ -1446,6 +1499,7 @@ exit:
         }
 
         FreeMessage(cachedResponse);
+
     }
 }
 

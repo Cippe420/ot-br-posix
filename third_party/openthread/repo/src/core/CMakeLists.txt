@@ -121,6 +121,7 @@ set(COMMON_SOURCES
     common/time_ticker.cpp
     common/timer.cpp
     common/tlvs.cpp
+    common/database.cpp
     common/trickle_timer.cpp
     common/uptime.cpp
     crypto/aes_ccm.cpp

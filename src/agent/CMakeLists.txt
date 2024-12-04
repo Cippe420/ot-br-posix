@@ -31,6 +31,7 @@ add_executable(otbr-agent
     main.cpp
     uris.hpp
     vendor.hpp
+    ../common/database.cpp
 )
 
 target_link_libraries(otbr-agent PRIVATE
@@ -41,6 +42,7 @@ target_link_libraries(otbr-agent PRIVATE
     $<$<BOOL:${OTBR_OPENWRT}>:otbr-ubus>
     $<$<BOOL:${OTBR_REST}>:otbr-rest>
     openthread-posix
+    sqlite3
     openthread-cli-ftd
     openthread-ftd
     openthread-spinel-rcp

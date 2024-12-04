@@ -55,6 +55,7 @@
 #include "common/mainloop.hpp"
 #include "common/types.hpp"
 #include "ncp/thread_host.hpp"
+#include "common/database.hpp"
 
 #ifdef OTBR_ENABLE_PLATFORM_ANDROID
 #ifndef __ANDROID__
@@ -358,16 +359,23 @@ static int realmain(int argc, char *argv[])
     {
         otbr::Application app(interfaceName, backboneInterfaceNames, radioUrls, enableAutoAttach, restListenAddress,
                               restListenPort);
-	    file.open("./coap.csv");
-	    file << "aperto file\n";
-	    file.close();
+        Database db("/home/pi/coap.db");
+        if (db.connect())
+        {
+            db.CreateTables();
+        }
+
+        db.InsertData("riga iniziale");
         gApp = &app;
         app.Init();
+
+
 	    // trying to setup the app network instance
         app.StartCoapResources();
 
         ret = app.Run();
 
+        db.disconnect();
         app.Deinit();
     }
 

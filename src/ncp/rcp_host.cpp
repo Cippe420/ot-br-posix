@@ -43,6 +43,7 @@
 #include <openthread/backbone_router_ftd.h>
 #include <openthread/border_routing.h>
 #include <openthread/dataset.h>
+#include <openthread/dataset_ftd.h>
 #include <openthread/dnssd_server.h>
 #include <openthread/link_metrics.h>
 #include <openthread/logging.h>
@@ -304,21 +305,21 @@ otError RcpHost::ApplyFeatureFlagList(const FeatureFlagList &aFeatureFlagList)
 //     file.open("home/pi/log.txt");
 //     file << "setNetworkParameters\n";
 //     file.close();
-// }
+// }    
 
 
-// static void coap_handle_request(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo)
-// {
+void coap_handle_request(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo)
+{
 
-//     OT_UNUSED_VARIABLE(aContext);
-//     OT_UNUSED_VARIABLE(aMessage);
-//     OT_UNUSED_VARIABLE(aMessageInfo);
-//     std::ofstream file;
-//     file.open("home/pi/log.txt");
-//     file << "triggeredHandle\n";
-//     file.close();
+    OT_UNUSED_VARIABLE(aContext);
+    OT_UNUSED_VARIABLE(aMessage);
+    OT_UNUSED_VARIABLE(aMessageInfo);
+    std::ofstream file;
+    file.open("home/pi/log.txt");
+    file << "triggeredHandle\n";
+    file.close();
 
-// }
+}
 
 
 // define enum types for yaml parsing
@@ -373,17 +374,15 @@ void RcpHost::SetNetworkParameters()
 {
     std::ofstream fileoutput;
     std::ifstream file(DATASET_CONFIG_FILE);
-    fileoutput.open("log.txt");
+    fileoutput.open("home/pi/log.txt");
 
-    mInstance = otInstanceInitSingle();
     otError error = OT_ERROR_NONE;
 	otOperationalDataset aDataset;
-	memset(&aDataset, 0, sizeof(otOperationalDataset));
 
-    aDataset.mActiveTimestamp.mSeconds             = 1;
-    aDataset.mActiveTimestamp.mTicks               = 0;
-    aDataset.mActiveTimestamp.mAuthoritative       = false;
-    aDataset.mComponents.mIsActiveTimestampPresent = true;
+
+    error = otDatasetCreateNewNetwork(mInstance, &aDataset);
+
+
 
     // if file can't be opened, log emergency and exit with errors
     if (!file)
@@ -394,9 +393,10 @@ void RcpHost::SetNetworkParameters()
 
     std::string line;
 
-        while (std::getline(file, line))
+    while (std::getline(file, line))
     {
 
+        // TODO: check for the correct format on input
         std::vector<std::string> result = split(line, ':');
         result[1].erase(remove(result[1].begin(), result[1].end(), ' '), result[1].end());
         fileoutput << result[1] << std::endl;
@@ -487,37 +487,16 @@ void RcpHost::SetNetworkParameters()
     file.close();
     fileoutput.close();
 
-    /* Set Channel to 14 */
-    // aDataset.mChannel                      = 14;
-    // aDataset.mComponents.mIsChannelPresent = true;
+    uint8_t mlp[OT_IP6_PREFIX_SIZE] = {0xfd, 0x30, 0x93, 0xd7,  // fd30:93d7
+    0x91, 0x54, 0xb7, 0xc2  // 9154:b7c2
+    };
 
-    /* Set Pan ID to 1234*/
-    // aDataset.mPanId                      = (otPanId)0x1234;
-    // aDataset.mComponents.mIsPanIdPresent = true;
+    memcpy(aDataset.mMeshLocalPrefix.m8,mlp, sizeof(aDataset.mMeshLocalPrefix.m8));
 
-
-    /* Set Extended Pan ID to 1111111122222222 */
-    // uint8_t extPanId[OT_EXT_PAN_ID_SIZE] = {0x11, 0x11, 0x11, 0x11, 0x22, 0x22, 0x22, 0x22};
-    // memcpy(aDataset.mExtendedPanId.m8, extPanId, sizeof(aDataset.mExtendedPanId));
-    // aDataset.mComponents.mIsExtendedPanIdPresent = true;
-
-    // /* Set network key to 00112233445566778899AABBCCDDEEFF*/
-    // uint8_t key[OT_NETWORK_KEY_SIZE] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
-    // memcpy(aDataset.mNetworkKey.m8, key, sizeof(aDataset.mNetworkKey));
-    // aDataset.mComponents.mIsNetworkKeyPresent = true;
-
-
-    // /* Set pskc to TMPSENS1 */
-    // static char aPskc[] = "TMPSENS1";
-    // error = otDatasetGeneratePskc(
-    //                           aPskc,
-    //                           reinterpret_cast<const otNetworkName *>(otThreadGetNetworkName(mInstance)),
-    //                           otThreadGetExtendedPanId(mInstance), &aDataset.mPskc);
-    // if (error != OT_ERROR_NONE)
-    // {
-    //     return;
-    // }
-    // aDataset.mComponents.mIsPskcPresent = true;
+    aDataset.mActiveTimestamp.mSeconds             = 1;
+    aDataset.mActiveTimestamp.mTicks               = 0;
+    aDataset.mActiveTimestamp.mAuthoritative       = false;
+    aDataset.mComponents.mIsActiveTimestampPresent = true;
 
     otDatasetSetActive(mInstance, &aDataset);
     // ifconfig up
@@ -531,23 +510,31 @@ void RcpHost::SetNetworkParameters()
         printf("error:%s\n",otThreadErrorToString(error));
     }
 
-    error=otCoapStart(mInstance, OT_DEFAULT_COAP_PORT);
-    if(error){
-        std::ofstream file;
-        file.open("home/pi/log.txt");
-        file << "there was an error!\n";
-        file.close();
+    // error=otCoapStart(mInstance, OT_DEFAULT_COAP_PORT);
 
-    }
+    // if(error){
+        
+    //     fileoutput.open("home/pi/log.txt");
+    //     fileoutput << "there was an error!\n";
+    //     fileoutput.close();
 
-    // // Imposta la risorsa CoAP
-    // otCoapResource  coapResource;
-    // coapResource.mUriPath = "sensors/Temperature";
-    // coapResource.mHandler = coap_handle_request;
-    // coapResource.mContext = mInstance;
-    // coapResource.mNext = NULL;
+    // }
 
-    // // aggiungi la risorsa all'istanza
+    // // // Imposta la risorsa CoAP
+    // otCoapResource coapResource;
+
+    // char uripath[32] = "thermostat/temperature";
+
+    // coapResource.mUriPath = uripath;
+    // coapResource.mHandler = &coap_handle_request;
+    // coapResource.mContext = this;
+    // coapResource.mNext = nullptr;
+
+    // if(!coapResource.mUriPath)
+    // {
+
+    // }
+    // aggiungi la risorsa all'istanza
     // otCoapAddResource(mInstance,&coapResource);
 
 }
@@ -557,8 +544,6 @@ void RcpHost::StartCoapServer()
     
 
 }
-
-
 
 
 void RcpHost::Deinit(void)

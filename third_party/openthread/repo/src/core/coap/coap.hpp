@@ -686,7 +686,8 @@ public:
      * Sends a header-only CoAP message to indicate not all blocks have been sent or
      * were sent out of order.
      *
-     * @param[in]  aRequest        A reference to the CoAP Message that was used in CoAP request.
+     * @param[in]  
+             A reference to the CoAP Message that was used in CoAP request.
      * @param[in]  aMessageInfo    The message info corresponding to the CoAP request.
      *
      * @retval kErrorNone          Successfully enqueued the CoAP response message.

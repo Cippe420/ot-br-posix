@@ -44,6 +44,7 @@ add_library(otbr-common
     tlv.hpp
     types.cpp
     types.hpp
+    
 )
 
 target_link_libraries(otbr-common

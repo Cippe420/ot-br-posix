@@ -31,6 +31,8 @@
  *   This file implements a simple CLI for the CoAP service.
  */
 
+#define kLogModuleName "CliCoap"
+
 #include "cli_coap.hpp"
 
 #if OPENTHREAD_CONFIG_COAP_API_ENABLE
@@ -186,6 +188,8 @@ template <> otError Coap::Process<Cmd("resource")>(Arg aArgs[])
     {
         VerifyOrExit(aArgs[0].GetLength() < kMaxUriLength, error = OT_ERROR_INVALID_ARGS);
 
+        OutputLine("triggerata resource\n");
+
         mResource.mUriPath = mUriPath;
         mResource.mContext = this;
         mResource.mHandler = &Coap::HandleRequest;
@@ -203,8 +207,10 @@ template <> otError Coap::Process<Cmd("resource")>(Arg aArgs[])
         strncpy(mUriPath, aArgs[0].GetCString(), sizeof(mUriPath) - 1);
 
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+        OutputLine("blockwise\n");
         otCoapAddBlockWiseResource(GetInstancePtr(), &mResource);
 #else
+        OutputLine("normal\n");
         otCoapAddResource(GetInstancePtr(), &mResource);
 #endif
     }
@@ -843,6 +849,8 @@ exit:
 
 void Coap::HandleRequest(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo)
 {
+    
+
     static_cast<Coap *>(aContext)->HandleRequest(aMessage, aMessageInfo);
 }
 
@@ -862,6 +870,7 @@ void Coap::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageInfo)
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE || OPENTHREAD_CONFIG_COAP_OBSERVE_API_ENABLE
     otCoapOptionIterator iterator;
 #endif
+
 
     OutputFormat("coap request from ");
     OutputIp6Address(aMessageInfo->mPeerAddr);
