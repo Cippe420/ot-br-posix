@@ -117,8 +117,7 @@ public:
     // start the application on given otInstance
     void SetupNetwork(otInstance *instance);
 
-    // start the host coap resources
-    void StartCoapResources(void);
+    void StartCoapResource(void);
 
     /**
      * This method runs the application until exit.

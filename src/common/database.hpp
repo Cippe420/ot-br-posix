@@ -3,6 +3,7 @@
 
 #include <string>
 #include <sqlite3.h>
+#include "payloadreader.hpp"
 
 class Database {
 private:
@@ -15,8 +16,8 @@ public:
 
     bool connect(void);                       // Metodo per aprire la connessione
     void disconnect(void);                    // Metodo per chiudere la connessione
-    void CreateTables(void);
-    void InsertData(std::string);
+    int CreateTables(void);
+    char *InsertData(Payload payload);
     void printError(void);                    // Metodo per stampare errori
 };
 

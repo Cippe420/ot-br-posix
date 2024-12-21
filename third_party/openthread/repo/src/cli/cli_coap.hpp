@@ -45,9 +45,10 @@
 namespace ot {
 namespace Cli {
 
-/**
+/** 
  * Implements the CLI CoAP server and client.
  */
+
 class Coap : private Utils
 {
 public:

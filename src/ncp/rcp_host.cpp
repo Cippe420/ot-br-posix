@@ -64,6 +64,7 @@
 #include "common/code_utils.hpp"
 #include "common/logging.hpp"
 #include "common/types.hpp"
+#include "common/database.hpp"
 
 #if OTBR_ENABLE_FEATURE_FLAGS
 #include "proto/feature_flag.pb.h"
@@ -217,6 +218,7 @@ void RcpHost::Init(void)
     VerifyOrExit(otLoggingSetLevel(level) == OT_ERROR_NONE, error = OTBR_ERROR_OPENTHREAD);
 
     mInstance = otSysInit(&mConfig);
+    mResource = otCoapResource{};
     assert(mInstance != nullptr);
 
     {
@@ -307,21 +309,6 @@ otError RcpHost::ApplyFeatureFlagList(const FeatureFlagList &aFeatureFlagList)
 //     file.close();
 // }    
 
-
-void coap_handle_request(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo)
-{
-
-    OT_UNUSED_VARIABLE(aContext);
-    OT_UNUSED_VARIABLE(aMessage);
-    OT_UNUSED_VARIABLE(aMessageInfo);
-    std::ofstream file;
-    file.open("home/pi/log.txt");
-    file << "triggeredHandle\n";
-    file.close();
-
-}
-
-
 // define enum types for yaml parsing
 enum otDatasetParameter
 {
@@ -346,7 +333,7 @@ std::vector<std::string> split(const std::string &str, char delimiter)
         tokens.push_back(token); // Aggiungi il token alla lista
     }
 
-    return tokens; // Restituisci il vettore di token
+    return tokens; // Restituisci il vettore di tokenj
 }
 
 // parse the string into enum type
@@ -368,6 +355,89 @@ otDatasetParameter hashit(std::string const &inString)
         return undefined;
 }
 
+
+void RcpHost::HandleRequest(void *aContext,otMessage *aMessage,const otMessageInfo *aMessageInfo)
+{
+
+    static_cast<RcpHost *>(aContext) ->HandleRequest(aMessage,aMessageInfo);
+}
+
+void RcpHost::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageInfo)
+{
+
+    OT_UNUSED_VARIABLE(aMessageInfo);
+    char name[] = "/home/pi/coap.db"; 
+    Database db(name);
+
+    if(db.connect()){
+
+        Payload payload{};
+
+        // from message.cpp / message.hpp
+        unsigned char aBuf[otMessageGetLength(aMessage)];
+        uint16_t bytesread = otMessageRead(aMessage,0,aBuf,otMessageGetLength(aMessage));
+
+        uint16_t start_payload = otMessageGetOffset(aMessage);
+
+        if (bytesread != 0)
+        {
+            extractString(aBuf, start_payload,8, payload.eui);
+            payload.pktnum = extractNumber(aBuf,start_payload,2);
+            payload.timestamp = extractNumber(aBuf,start_payload,4);
+            payload.undef = extractNumber(aBuf,start_payload,1);
+            uint16_t temperature_raw = extractNumber(aBuf,start_payload,2);
+            payload.temperature = -45.0 + 175.0 * temperature_raw / (1 << 16);
+            uint16_t humidity_raw = extractNumber(aBuf,start_payload, 2);
+            payload.humidity = humidity_raw * 100.0 / (1 << 16);
+            uint16_t ir_raw = extractNumber(aBuf,start_payload,2);
+            payload.ir = ir_raw / 0.5;
+            uint16_t vis_raw = extractNumber(aBuf,start_payload,2);
+            payload.vis = vis_raw / 0.5;
+            uint16_t batt_raw = extractNumber(aBuf,start_payload,2);
+            payload.batt = (((batt_raw >> 4) & 0xF)) + ((batt_raw & 0xF) / 1000);
+            double temperatureSum;
+            for (int i = 0; i<10;i++)
+            {
+                uint16_t tmpraw = extractNumber(aBuf,start_payload,4);
+                temperatureSum += tmpraw/100.0;
+
+            }
+            payload.avg_temperature = temperatureSum / 10;    
+            double humiditySum;
+            for (int i = 0 ; i<10; i++)
+            {
+                uint16_t hum = extractNumber(aBuf,start_payload,8);
+                humiditySum += hum/1000.0;
+            }
+            payload.avg_humidity = humiditySum / 10;
+            double pressureSum;
+            for(int i=0; i<10;i++)
+            {
+                uint64_t pressure = extractNumber(aBuf,start_payload,8);
+                pressureSum += pressure;
+            }
+            payload.avg_pressure = pressureSum/10.0;                    
+            double gasReSum;
+            for(int i =0;i<10;i++)
+            {
+                uint64_t gas_res = extractNumber(aBuf,start_payload,8);
+                gasReSum += gas_res;
+            }
+            payload.avg_gas_resistance =  gasReSum /10;
+
+            // insert the payload into the table
+            char *erroredatabase = db.InsertData(payload);
+
+            if(erroredatabase != nullptr)
+            {
+                printf(":(\n");
+            }
+
+        }
+
+    }
+
+}
 
 
 void RcpHost::SetNetworkParameters()
@@ -510,39 +580,25 @@ void RcpHost::SetNetworkParameters()
         printf("error:%s\n",otThreadErrorToString(error));
     }
 
-    // error=otCoapStart(mInstance, OT_DEFAULT_COAP_PORT);
+    error=otCoapStart(mInstance, OT_DEFAULT_COAP_PORT);
 
-    // if(error){
+    if(error)
+    {
         
-    //     fileoutput.open("home/pi/log.txt");
-    //     fileoutput << "there was an error!\n";
-    //     fileoutput.close();
+        fileoutput.open("home/pi/log.txt");
+        fileoutput << "there was an error!\n";
+        fileoutput.close();
 
-    // }
-
-    // // // Imposta la risorsa CoAP
-    // otCoapResource coapResource;
-
-    // char uripath[32] = "thermostat/temperature";
-
-    // coapResource.mUriPath = uripath;
-    // coapResource.mHandler = &coap_handle_request;
-    // coapResource.mContext = this;
-    // coapResource.mNext = nullptr;
-
-    // if(!coapResource.mUriPath)
-    // {
-
-    // }
-    // aggiungi la risorsa all'istanza
-    // otCoapAddResource(mInstance,&coapResource);
-
+    }
 }
 
 void RcpHost::StartCoapServer()
 {
-    
+    mResource.mUriPath = "thermostat/temperature";
+    mResource.mContext = this;
+    mResource.mHandler = &RcpHost::HandleRequest;
 
+    otCoapAddResource(mInstance,&mResource);
 }
 
 

@@ -103,12 +103,11 @@ void Application::Init(void)
     otbrLogInfo("Co-processor version: %s", mHost->GetCoprocessorVersion());
 }
 
-// response handler for the "test" resource
-
 // calling this starts a set of coap resources
-void Application::StartCoapResources()
+void Application::StartCoapResource()
 {
-    mHost->StartCoapServer();
+    mHost->StartCoapServer();   
+
 }
 
 

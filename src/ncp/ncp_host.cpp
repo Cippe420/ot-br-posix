@@ -111,6 +111,24 @@ void NcpHost::StartCoapServer(void)
 }
 
 
+void NcpHost::HandleRequest(void *aContext,otMessage *aMessage,const otMessageInfo *aMessageInfo)
+{
+    OT_UNUSED_VARIABLE(aContext);
+    OT_UNUSED_VARIABLE(aMessage);
+    OT_UNUSED_VARIABLE(aMessageInfo);
+
+}
+
+void NcpHost::HandleRequest(otMessage *aMessage,const otMessageInfo *aMessageInfo)
+{
+    OT_UNUSED_VARIABLE(aMessage);
+    OT_UNUSED_VARIABLE(aMessageInfo);
+
+
+}
+
+
+
 void NcpHost::Join(const otOperationalDatasetTlvs &aActiveOpDatasetTlvs, const AsyncResultReceiver &aReceiver)
 {
     AsyncTaskPtr task;

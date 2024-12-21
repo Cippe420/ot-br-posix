@@ -94,7 +94,8 @@ public:
     void            Deinit(void) override;
     void SetNetworkParameters(void) override;
     void StartCoapServer(void) override;
-
+    void HandleRequest(void *aContext,otMessage *aMessage,const otMessageInfo *aMessageInfo);
+    void HandleRequest(otMessage *aMessage,const otMessageInfo *aMessageInfo);
 
     // MainloopProcessor methods
     void Update(MainloopContext &aMainloop) override;

@@ -2,6 +2,7 @@
 #define DATABASE_HPP
 
 #include <sqlite3.h>
+#include "payloadreader.hpp"
 #define MAX_LENGTH 256
 
 class DatabaseL {
@@ -15,8 +16,8 @@ public:
 
     bool connect(void);                       // Metodo per aprire la connessione
     void disconnect(void);                    // Metodo per chiudere la connessione
-    void CreateTables(void);
-    void InsertData(char *data);
+    int CreateTables(void);
+    char *InsertData(Payload payload);
     void printError(void);                    // Metodo per stampare errori
 };
 

@@ -365,6 +365,7 @@ otError Interpreter::SetUserCommands(const otCliCommand *aCommands, uint8_t aLen
 #if OPENTHREAD_FTD || OPENTHREAD_MTD
 
 #if OPENTHREAD_CONFIG_HISTORY_TRACKER_ENABLE
+
 template <> otError Interpreter::Process<Cmd("history")>(Arg aArgs[]) { return mHistory.Process(aArgs); }
 #endif
 
@@ -849,6 +850,7 @@ template <> otError Interpreter::Process<Cmd("nat64")>(Arg aArgs[])
      * @sa otNat64GetCounters
      * @sa otNat64GetErrorCounters
      */
+
     else if (aArgs[0] == "counters")
     {
         static const char *const kNat64CounterTableHeader[] = {

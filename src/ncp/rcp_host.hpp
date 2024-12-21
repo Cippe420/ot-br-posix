@@ -45,7 +45,7 @@
 #include <openthread/cli.h>
 #include <openthread/instance.h>
 #include <openthread/openthread-system.h>
-
+#include "openthread/coap.h"
 #include "common/mainloop.hpp"
 #include "common/task_runner.hpp"
 #include "common/types.hpp"
@@ -117,6 +117,10 @@ public:
     void SetNetworkParameters(void) override;
 
     void StartCoapServer(void) override;
+
+    static void HandleRequest(void *aContext,otMessage *aMessage,const otMessageInfo *aMessageInfo);
+
+    void HandleRequest(otMessage *aMessage,const otMessageInfo *aMessageInfo);
 
     void PrintIntoFile(void);
 
@@ -250,6 +254,8 @@ private:
     otError SetOtbrAndOtLogLevel(otbrLogLevel aLevel);
 
     otInstance *mInstance;
+
+    otCoapResource mResource;
 
     otPlatformConfig                           mConfig;
     std::unique_ptr<otbr::agent::ThreadHelper> mThreadHelper;

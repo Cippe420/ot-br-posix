@@ -1,6 +1,7 @@
 #include "database.hpp"
 #include <iostream>
 
+
 Database::Database(const std::string& db_name) : db(nullptr), db_name(db_name) {}
 
 Database::~Database() {
@@ -25,42 +26,71 @@ void Database::disconnect() {
     }
 }   
 
-
-void Database::CreateTables()
+int Database::CreateTables()
 {
-    std::string createTableQuery = "CREATE TABLE IF NOT EXISTS dati ("
-                                       "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                                       "valore TEXT NOT NULL);";
+
+    /*
+    
+    table -----
+    
+    |eui|pktnum|timestamp|undef|temperature|humidity|ir|vis|batt|temperature2|humidity2|pressure|gas_resistance|
+    
+    */
+    const char *createTableQuery = 
+    "CREATE TABLE IF NOT EXISTS data ("
+    "id INTEGER PRIMARY KEY AUTOINCREMENT, "  // Chiave primaria automatica
+    "eui TEXT, "                     // Identificatore EUI in formato testo
+    "pktnum INTEGER, "               // Numero del pacchetto
+    "timestamp INTEGER, "            // Timestamp in UNIX time
+    "undef INTEGER, "                         // Campo indefinito (opzionale)
+    "temperature INTEGER, "                      // Temperatura
+    "humidity INTEGER, "                         // Umidità
+    "ir INTEGER, "                               // Luce infrarossa
+    "vis INTEGER, "                              // Luce visibile
+    "batt INTEGER, "                             // Stato della batteria
+    "avg_temperature INTEGER, "                 // Media delle temperature
+    "avg_humidity INTEGER, "                    // Media delle umidità
+    "avg_pressure INTEGER, "                     // Media delle pressioni
+    "avg_gas_resistance INTEGER"                 // Media della resistenza gas
+    ");";
 
     char* errMsg = nullptr;
-    int rc = sqlite3_exec(db, createTableQuery.c_str(), nullptr, nullptr, &errMsg);
+    int rc = sqlite3_exec(db, createTableQuery, nullptr, nullptr, &errMsg);
     if (rc != SQLITE_OK) {
-        std::cerr << "Errore nell'esecuzione della query: " << errMsg << std::endl;
         sqlite3_free(errMsg);
-        return;
+        return 1;
     }
-    std::cout << "Query eseguita con successo." << std::endl;
+
+    return 0;
 
 }
 
 
-void Database::InsertData(std::string data)
+char *Database::InsertData(Payload payload)
 {
-    std::string insertDataQuery = "INSERT INTO dati (valore) VALUES ('" + data + "');";
-    char* errMsg = nullptr;
-    int rc = sqlite3_exec(db, insertDataQuery.c_str(), nullptr, nullptr, &errMsg);
-    if (rc != SQLITE_OK) {
-        std::cerr << "Errore nell'esecuzione della query: " << errMsg << std::endl;
-        sqlite3_free(errMsg);
-        return;
-    }
-    std::cout << "Query eseguita con successo." << std::endl;
 
+    char insertQuery[512];
+    snprintf(insertQuery, 
+    sizeof(insertQuery),
+    "INSERT INTO data (eui,pktnum,timestamp,undef,temperature,humidity,ir,vis,batt,avg_temperature,avg_humidity,avg_pressure,avg_gas_resistance) VALUES ('%s','%d','%d','%d','%d','%d','%d','%d','%d','%d','%d','%d','%d');",
+     payload.eui,payload.pktnum,payload.timestamp,
+     payload.undef,payload.temperature,payload.humidity,
+     payload.ir,payload.vis,payload.batt,payload.avg_temperature,
+     payload.avg_humidity,payload.avg_pressure,payload.avg_gas_resistance);
+
+    char* errorMessage = nullptr;
+    if (sqlite3_exec(db, insertQuery, nullptr, nullptr, &errorMessage) != SQLITE_OK)
+    {
+        return errorMessage;
+    } 
+    return nullptr;
 }
 
 
 void Database::printError() {
-    if (db) {
-        std::cerr << "Errore: " << sqlite3_errmsg(db) << std::endl;
+    if (db != nullptr) {
+        printf("Errore database: %s\n", sqlite3_errmsg(db));
+    } else {
+        printf("Il database non è connesso.\n");
     }
 }
