@@ -744,6 +744,7 @@ void platformRadioProcess(otInstance *aInstance, const fd_set *aReadFdSet, const
         {
             sReceiveFrame.mLength = len - 1;
             radioReceive(aInstance);
+
         }
     }
 #endif

@@ -4,6 +4,9 @@
 #include <string>
 #include <sqlite3.h>
 #include "payloadreader.hpp"
+#include <iomanip>
+#include <sstream>
+#include <cstring>
 
 // Database Manager instance
 class Database {
@@ -19,8 +22,8 @@ public:
     void disconnect(void);                    
     int CreateTables(void);
     char *InsertData(Payload payload);
-    bool CheckNewSensor(char *eui);
-    char InsertSensor(char *eui);
+    bool CheckNewSensor(unsigned char *eui);
+    char *InsertSensor(unsigned char *eui);
     void printError(void);                    
 };
 

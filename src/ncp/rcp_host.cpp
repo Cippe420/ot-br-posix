@@ -370,51 +370,58 @@ void RcpHost::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageIn
     char name[] = "/home/pi/coap.db"; 
     Database db(name);
 
-
-
     if(db.connect()){
 
         Payload payload{};
 
+        payload.eui = new unsigned char[8];
+
+        memset(payload.eui,0,17);
+
         // from message.cpp / message.hpp
         unsigned char aBuf[otMessageGetLength(aMessage)];
+
         uint16_t bytesread = otMessageRead(aMessage,0,aBuf,otMessageGetLength(aMessage));
 
         uint16_t start_payload = otMessageGetOffset(aMessage);
+        // allocating mem for eui
 
         if (bytesread != 0)
         {
-            extractString(aBuf, start_payload,8, payload.eui);
 
+            extractString(aBuf, &start_payload,8, payload.eui);
             // check if the eui is a new sensor
             bool newSensor = db.CheckNewSensor(payload.eui);
 
-            if(!newSensor)
+            if(newSensor)
             {
-                char *erroredatabase = db.InsertSensor(&payload.eui);
+                char *erroredatabase = db.InsertSensor(payload.eui);
                 if(erroredatabase != nullptr)
                 {
                     otbrLogEmerg("impossibile inserire il sensore");
                 }
+
+                // print the number of sensors into a file
+                
             }   
 
-            payload.pktnum = extractNumber(aBuf,start_payload,2);
-            payload.timestamp = extractNumber(aBuf,start_payload,4);
-            payload.undef = extractNumber(aBuf,start_payload,1);
-            uint16_t temperature_raw = extractNumber(aBuf,start_payload,2);
+            payload.pktnum = extractNumber(aBuf,&start_payload,2);
+            payload.timestamp = extractNumber(aBuf,&start_payload,4);
+            payload.undef = extractNumber(aBuf,&start_payload,1);
+            uint16_t temperature_raw = extractNumber(aBuf,&start_payload,2);
             payload.temperature = -45.0 + 175.0 * temperature_raw / (1 << 16);
-            uint16_t humidity_raw = extractNumber(aBuf,start_payload, 2);
+            uint16_t humidity_raw = extractNumber(aBuf,&start_payload, 2);
             payload.humidity = humidity_raw * 100.0 / (1 << 16);
-            uint16_t ir_raw = extractNumber(aBuf,start_payload,2);
+            uint16_t ir_raw = extractNumber(aBuf,&start_payload,2);
             payload.ir = ir_raw / 0.5;
-            uint16_t vis_raw = extractNumber(aBuf,start_payload,2);
+            uint16_t vis_raw = extractNumber(aBuf,&start_payload,2);
             payload.vis = vis_raw / 0.5;
-            uint16_t batt_raw = extractNumber(aBuf,start_payload,2);
+            uint16_t batt_raw = extractNumber(aBuf,&start_payload,2);
             payload.batt = (((batt_raw >> 4) & 0xF)) + ((batt_raw & 0xF) / 1000);
             double temperatureSum;
             for (int i = 0; i<10;i++)
             {
-                uint16_t tmpraw = extractNumber(aBuf,start_payload,4);
+                uint16_t tmpraw = extractNumber(aBuf,&start_payload,4);
                 temperatureSum += tmpraw/100.0;
 
             }
@@ -422,21 +429,21 @@ void RcpHost::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageIn
             double humiditySum;
             for (int i = 0 ; i<10; i++)
             {
-                uint16_t hum = extractNumber(aBuf,start_payload,8);
+                uint16_t hum = extractNumber(aBuf,&start_payload,8);
                 humiditySum += hum/1000.0;
             }
             payload.avg_humidity = humiditySum / 10;
             double pressureSum;
             for(int i=0; i<10;i++)
             {
-                uint64_t pressure = extractNumber(aBuf,start_payload,8);
+                uint64_t pressure = extractNumber(aBuf,&start_payload,8);
                 pressureSum += pressure;
             }
             payload.avg_pressure = pressureSum/10.0;                    
             double gasReSum;
             for(int i =0;i<10;i++)
             {
-                uint64_t gas_res = extractNumber(aBuf,start_payload,8);
+                uint64_t gas_res = extractNumber(aBuf,&start_payload,8);
                 gasReSum += gas_res;
             }
             payload.avg_gas_resistance =  gasReSum /10;
@@ -469,8 +476,7 @@ void RcpHost::SetNetworkParameters()
 	otOperationalDataset aDataset;
 
 
-    error = otDatasetCreateNewNetwork(mInstance, &aDataset);
-
+    error = otDatasetCreateNewNetwork(mInstance, &aDataset); 
 
 
     // if file can't be opened, log emergency and exit with errors
@@ -615,11 +621,7 @@ void RcpHost::StartCoapServer()
     mResource.mContext = this;
     mResource.mHandler = &RcpHost::HandleRequest;
 
-    otCoapAddResource(mInstance,&mResource);
-
-    mUdpReceiver.mHandler = &RcpHost::HandleUdpReceive;
-    mUdpReceiver.mContext = this;
-    otUdpAddReceiver(mInstance,&mUdpReceiver);
+    otCoapAddResource(mInstance, &mResource);
 }
 
 

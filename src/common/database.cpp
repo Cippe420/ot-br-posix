@@ -1,5 +1,8 @@
 #include "database.hpp"
 #include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <cstring>
 
 
 Database::Database(const std::string& db_name) : db(nullptr), db_name(db_name) {}
@@ -64,10 +67,10 @@ int Database::CreateTables()
     "avg_humidity INTEGER, "                    // Media delle umidità
     "avg_pressure INTEGER, "                     // Media delle pressioni
     "avg_gas_resistance INTEGER,"                 // Media della resistenza gas
-    "eui TEXT FOREIGN KEY REFERENCES sensors(id) "                     // Identificatore EUI in formato testo
+    "eui TEXT, FOREIGN KEY(eui) REFERENCES sensors(id) "                     // Identificatore EUI in formato testo
     ");";
 
-    int rc = sqlite3_exec(db, createTableQuery, nullptr, nullptr, &errMsg);
+    rc = sqlite3_exec(db, createTableQuery, nullptr, nullptr, &errMsg);
     if (rc != SQLITE_OK) {
         sqlite3_free(errMsg);
         return 1;
@@ -81,13 +84,20 @@ int Database::CreateTables()
 char *Database::InsertData(Payload payload)
 {
     char insertQuery[512];
+
+    std::ostringstream oss;
+    for (int i = 0; i < 8; i++) {
+        oss << std::hex << std::setw(2) << std::setfill('0') << (int)payload.eui[i];
+    }
+    std::string euiStr = oss.str();
+
     snprintf(insertQuery, 
     sizeof(insertQuery),
     "INSERT INTO data (pktnum,timestamp,undef,temperature,humidity,ir,vis,batt,avg_temperature,avg_humidity,avg_pressure,avg_gas_resistance,eui) VALUES ('%d','%d','%d','%d','%d','%d','%d','%d','%d','%d','%d','%d','%s');",
      payload.pktnum,payload.timestamp,
      payload.undef,payload.temperature,payload.humidity,
      payload.ir,payload.vis,payload.batt,payload.avg_temperature,
-     payload.avg_humidity,payload.avg_pressure,payload.avg_gas_resistance,payload.eui);
+     payload.avg_humidity,payload.avg_pressure,payload.avg_gas_resistance,euiStr.c_str());
 
     char* errorMessage = nullptr;
     if (sqlite3_exec(db, insertQuery, nullptr, nullptr, &errorMessage) != SQLITE_OK)
@@ -97,14 +107,20 @@ char *Database::InsertData(Payload payload)
     return nullptr;
 }
 
-char *Database::InsertSensor(char *eui)
+char *Database::InsertSensor(unsigned char *eui)
 {
     char* errorMessage = nullptr;
     char insertQuery[512];
-    snprintf(insertQuery, 
-    sizeof(insertQuery),
-    "INSERT INTO sensors (id,state) VALUES ('%s','active');",
-     eui);
+
+    std::ostringstream oss;
+    for (int i = 0; i < 8; i++) {
+        oss << std::hex << std::setw(2) << std::setfill('0') << (int)eui[i];
+    }
+    std::string euiStr = oss.str();
+
+    snprintf(insertQuery, sizeof(insertQuery), 
+             "INSERT INTO sensors (id, state) VALUES ('%s', 'active');", 
+             euiStr.c_str());
 
     if (sqlite3_exec(db, insertQuery, nullptr, nullptr, &errorMessage) != SQLITE_OK)
     {
@@ -113,12 +129,22 @@ char *Database::InsertSensor(char *eui)
     return nullptr;
 }
 
-bool Database::CheckNewSensor(char *eui)
+bool Database::CheckNewSensor(unsigned char *eui)
 {
     char *errorMessage = nullptr;
     char query[512];
-    snprintf(query, sizeof(query), "EXISTS(SELECT * FROM sensors WHERE id = '%s');", eui);
-    if (sqlite3_exec(db, insertQuery, nullptr, nullptr, &errorMessage) != SQLITE_OK)
+
+    // Converti eui in una stringa esadecimale
+    std::ostringstream oss;
+    for (int i = 0; i < 8; i++) {  // Supponiamo che EUI sia lungo 8 byte
+        oss << std::hex << std::setw(2) << std::setfill('0') << (int)eui[i];
+    }
+    std::string euiStr = oss.str();
+
+    // Formatta la query
+    snprintf(query, sizeof(query), "SELECT EXISTS(SELECT 1 FROM sensors WHERE id = '%s');", euiStr.c_str());
+
+    if (sqlite3_exec(db, query, nullptr, nullptr, &errorMessage) != SQLITE_OK)
     {
         return false;
     } 

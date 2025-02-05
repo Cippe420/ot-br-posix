@@ -313,7 +313,14 @@ static int realmain(int argc, char *argv[])
         Database db("/home/pi/coap.db");
         if (db.connect())
         {
-            db.CreateTables();
+            int errorDB = db.CreateTables();
+            if (errorDB)
+            {
+                otbrLogEmerg("errore durante la creazione delle tabelle \n");
+            }
+        }else
+        {
+            otbrLogEmerg("impossibile connettersi al database \n");
         }
 
         gApp = &app;
