@@ -394,7 +394,7 @@ void RcpHost::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageIn
                 char *erroredatabase = db.InsertSensor(payload.eui);
                 if(erroredatabase != nullptr)
                 {
-                    printf(":(\n");
+                    otbrLogEmerg("impossibile inserire il sensore");
                 }
             }   
 
@@ -446,11 +446,14 @@ void RcpHost::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageIn
 
             if(erroredatabase != nullptr)
             {
-                printf(":(\n");
+                otbrLogEmerg("impossibile inserire il payload \n");
             }
 
         }
 
+    }else
+    {
+        otbrLogEmerg("impossibile connettersi al database\n");
     }
 
 }
