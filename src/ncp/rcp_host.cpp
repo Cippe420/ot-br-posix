@@ -391,7 +391,7 @@ void RcpHost::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageIn
 
             if(!newSensor)
             {
-                char *erroredatabase = db.InsertSensor(payload.eui);
+                char *erroredatabase = db.InsertSensor(&payload.eui);
                 if(erroredatabase != nullptr)
                 {
                     otbrLogEmerg("impossibile inserire il sensore");
