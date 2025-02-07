@@ -20,7 +20,7 @@ public:
     int CreateTables(void);
     char *InsertData(Payload payload);
     bool CheckNewSensor(char *eui);
-    char *Database::InsertSensor(char *eui);
+    char InsertSensor(char *eui);
     void printError(void);                    
 };
 
