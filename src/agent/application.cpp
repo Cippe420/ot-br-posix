@@ -107,7 +107,6 @@ void Application::Init(void)
 void Application::StartCoapResource()
 {
     mHost->StartCoapServer();   
-
 }
 
 

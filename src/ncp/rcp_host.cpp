@@ -321,6 +321,7 @@ enum otDatasetParameter
     undefined
 };
 
+
 std::vector<std::string> split(const std::string &str, char delimiter)
 {
     std::vector<std::string> tokens;
@@ -369,6 +370,8 @@ void RcpHost::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageIn
     char name[] = "/home/pi/coap.db"; 
     Database db(name);
 
+
+
     if(db.connect()){
 
         Payload payload{};
@@ -382,6 +385,19 @@ void RcpHost::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageIn
         if (bytesread != 0)
         {
             extractString(aBuf, start_payload,8, payload.eui);
+
+            // check if the eui is a new sensor
+            bool newSensor = db.CheckNewSensor(payload.eui);
+
+            if(!newSensor)
+            {
+                char *erroredatabase = db.InsertSensor(payload.eui);
+                if(erroredatabase != nullptr)
+                {
+                    printf(":(\n");
+                }
+            }   
+
             payload.pktnum = extractNumber(aBuf,start_payload,2);
             payload.timestamp = extractNumber(aBuf,start_payload,4);
             payload.undef = extractNumber(aBuf,start_payload,1);
@@ -569,9 +585,7 @@ void RcpHost::SetNetworkParameters()
     aDataset.mComponents.mIsActiveTimestampPresent = true;
 
     otDatasetSetActive(mInstance, &aDataset);
-    // ifconfig up
     otIp6SetEnabled(mInstance, true);
-    // thread start
     otThreadSetEnabled(mInstance, true);
 
     error = otThreadBecomeLeader(mInstance);
@@ -599,6 +613,10 @@ void RcpHost::StartCoapServer()
     mResource.mHandler = &RcpHost::HandleRequest;
 
     otCoapAddResource(mInstance,&mResource);
+
+    mUdpReceiver.mHandler = &RcpHost::HandleUdpReceive;
+    mUdpReceiver.mContext = this;
+    otUdpAddReceiver(mInstance,&mUdpReceiver);
 }
 
 

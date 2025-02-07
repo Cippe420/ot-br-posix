@@ -5,20 +5,23 @@
 #include <sqlite3.h>
 #include "payloadreader.hpp"
 
+// Database Manager instance
 class Database {
 private:
-    sqlite3* db; // Puntatore al database SQLite
+    sqlite3* db; 
     std::string db_name;
 
 public:
-    Database(const std::string& db_name); // Costruttore
-    ~Database();                          // Distruttore
+    Database(const std::string& db_name); 
+    ~Database();                         
 
-    bool connect(void);                       // Metodo per aprire la connessione
-    void disconnect(void);                    // Metodo per chiudere la connessione
+    bool connect(void);                      
+    void disconnect(void);                    
     int CreateTables(void);
     char *InsertData(Payload payload);
-    void printError(void);                    // Metodo per stampare errori
+    bool CheckNewSensor(char *eui);
+    char *Database::InsertSensor(char *eui);
+    void printError(void);                    
 };
 
 #endif

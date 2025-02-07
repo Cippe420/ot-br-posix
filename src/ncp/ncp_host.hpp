@@ -92,8 +92,10 @@ public:
     const char     *GetInterfaceName(void) const override { return mConfig.mInterfaceName; }
     void            Init(void) override;
     void            Deinit(void) override;
+
     void SetNetworkParameters(void) override;
     void StartCoapServer(void) override;
+    
     void HandleRequest(void *aContext,otMessage *aMessage,const otMessageInfo *aMessageInfo);
     void HandleRequest(otMessage *aMessage,const otMessageInfo *aMessageInfo);
 

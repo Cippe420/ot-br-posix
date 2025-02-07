@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <cstddef>
 struct Payload{
-                    // maybe not uint8
+                    // payload parser for the packets received
                     char eui[17];
                     uint16_t pktnum;
                     uint16_t timestamp;
@@ -14,7 +14,6 @@ struct Payload{
                     uint16_t ir;
                     uint16_t vis;
                     uint16_t batt;
-                    // need the average of those,really
                     uint16_t avg_temperature;
                     uint16_t avg_humidity;
                     uint16_t avg_pressure;
