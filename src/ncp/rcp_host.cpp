@@ -390,7 +390,7 @@ void RcpHost::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageIn
             std::cerr << "CONTROLLO NUOVO SENSORE " << std::endl;
             // check if the eui is a new sensor
             bool existsSensor = db.CheckNewSensor(payload.eui);
-            std::cerr << "sensore nuovo:" << std::boolalpha << existsSensor <<std::endl;
+            std::cerr << "esiste il sensore:" << std::boolalpha << existsSensor <<std::endl;
             if(!existsSensor)
             {
                 db.InsertSensor(payload.eui);                
