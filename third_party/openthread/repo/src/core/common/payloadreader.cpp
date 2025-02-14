@@ -48,3 +48,26 @@ void extractString(const unsigned char* payload, uint16_t *start_byte, uint16_t 
 
     file.close();
 }
+
+uint64_t extractEui64(unsigned char * number, uint16_t *start,uint16_t length)
+{
+    uint64_t result;
+    unsigned char ltlEndian[length];
+    for (int i = 0; i < length ; i++)
+    {
+        ltlEndian[i] = number[*start + length - i - 1];
+    }
+    result = bytesToDecimal64(ltlEndian,length);
+    *start += length;
+
+    return result;
+}
+
+uint64_t bytesToDecimal64(unsigned char* data, uint16_t length) {
+    uint64_t result=0;
+    for (size_t i = 0; i < length; ++i) {
+            result = (result << 8) | data[i]; // Shift a sinistra di 8 bit e aggiungi il byte corrente
+        }
+        return result;
+}
+

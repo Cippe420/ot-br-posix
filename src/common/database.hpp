@@ -21,9 +21,9 @@ public:
     bool connect(void);                      
     void disconnect(void);                    
     int CreateTables(void);
-    char *InsertData(Payload payload);
-    bool CheckNewSensor(unsigned char *eui);
-    char *InsertSensor(unsigned char *eui);
+    const char *InsertData(Payload payload);
+    bool CheckNewSensor(uint64_t eui);
+    void InsertSensor(uint64_t eui);
     void printError(void);                    
 };
 

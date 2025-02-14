@@ -81,74 +81,121 @@ int Database::CreateTables()
 }
 
 
-char *Database::InsertData(Payload payload)
+const char *Database::InsertData(Payload payload)
 {
-    char insertQuery[512];
-
-    std::ostringstream oss;
-    for (int i = 0; i < 8; i++) {
-        oss << std::hex << std::setw(2) << std::setfill('0') << (int)payload.eui[i];
-    }
-    std::string euiStr = oss.str();
-
-    snprintf(insertQuery, 
-    sizeof(insertQuery),
-    "INSERT INTO data (pktnum,timestamp,undef,temperature,humidity,ir,vis,batt,avg_temperature,avg_humidity,avg_pressure,avg_gas_resistance,eui) VALUES ('%d','%d','%d','%d','%d','%d','%d','%d','%d','%d','%d','%d','%s');",
-     payload.pktnum,payload.timestamp,
-     payload.undef,payload.temperature,payload.humidity,
-     payload.ir,payload.vis,payload.batt,payload.avg_temperature,
-     payload.avg_humidity,payload.avg_pressure,payload.avg_gas_resistance,euiStr.c_str());
-
-    char* errorMessage = nullptr;
-    if (sqlite3_exec(db, insertQuery, nullptr, nullptr, &errorMessage) != SQLITE_OK)
+    sqlite3_stmt *stmt;
+    std::string insertData("INSERT INTO data (pktnum,timestamp,undef,temperature,humidity,ir,vis,batt,avg_temperature,avg_humidity,avg_pressure,avg_gas_resistance,eui) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
+    if (sqlite3_open("/home/pi/coap.db", &db) != SQLITE_OK) 
     {
-        return errorMessage;
+            std::cerr << "Errore apertura database: " << sqlite3_errmsg(db) << std::endl;
+            return sqlite3_errmsg(db);
+    }
+
+
+    // prepara lo statement
+    if (sqlite3_prepare_v2(db, insertData.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Errore preparazione query insertData: " << sqlite3_errmsg(db) << std::endl;
+        sqlite3_close(db);
+        return sqlite3_errmsg(db);
+    }
+    // binda ogni campo del payload step by step
+    std::string tmpEui = std::to_string(payload.eui);
+    sqlite3_bind_int(stmt,1,static_cast<int>(payload.pktnum));
+    sqlite3_bind_int(stmt,2,static_cast<int>(payload.timestamp));
+    sqlite3_bind_int(stmt,3,static_cast<int>(payload.undef));
+    sqlite3_bind_int(stmt,4,static_cast<int>(payload.temperature));
+    sqlite3_bind_int(stmt,5,static_cast<int>(payload.humidity));
+    sqlite3_bind_int(stmt,6,static_cast<int>(payload.ir));
+    sqlite3_bind_int(stmt,7,static_cast<int>(payload.vis));
+    sqlite3_bind_int(stmt,8,static_cast<int>(payload.batt));
+    sqlite3_bind_int(stmt,9,static_cast<int>(payload.avg_temperature));
+    sqlite3_bind_int(stmt,10,static_cast<int>(payload.avg_humidity));
+    sqlite3_bind_int(stmt,11,static_cast<int>(payload.avg_pressure));
+    sqlite3_bind_int(stmt,12,static_cast<int>(payload.avg_gas_resistance));
+    sqlite3_bind_text(stmt,13, tmpEui.c_str(), -1, SQLITE_STATIC);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE)
+    {
+        std::cerr << "Errore esecuzione query: " << sqlite3_errmsg(db) << std::endl;
+        return sqlite3_errmsg(db);
     } 
+    else 
+    {
+        std::cout << "Data inserita con successo!" << std::endl;
+    }
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
     return nullptr;
 }
 
-char *Database::InsertSensor(unsigned char *eui)
+void Database::InsertSensor(uint64_t eui)
 {
-    char* errorMessage = nullptr;
-    char insertQuery[512];
+    sqlite3_stmt *stmt;
 
-    std::ostringstream oss;
-    for (int i = 0; i < 8; i++) {
-        oss << std::hex << std::setw(2) << std::setfill('0') << (int)eui[i];
-    }
-    std::string euiStr = oss.str();
-
-    snprintf(insertQuery, sizeof(insertQuery), 
-             "INSERT INTO sensors (id, state) VALUES ('%s', 'active');", 
-             euiStr.c_str());
-
-    if (sqlite3_exec(db, insertQuery, nullptr, nullptr, &errorMessage) != SQLITE_OK)
+    std::string sql("INSERT INTO sensors(id,state) values(?,'active')");
+    if (sqlite3_open("/home/pi/coap.db", &db) != SQLITE_OK) 
     {
-        return errorMessage;
-    } 
-    return nullptr;
+            std::cerr << "Errore apertura database: " << sqlite3_errmsg(db) << std::endl;
+            return;
+    }
+
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Errore preparazione query insertSensor: " << sqlite3_errmsg(db) << std::endl;
+        sqlite3_close(db);
+        return;
+    }
+
+    // binda ogni campo del payload step by step
+    std::string tmpEui = std::to_string(eui);
+    sqlite3_bind_text(stmt, 1, tmpEui.c_str(), -1, SQLITE_STATIC);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        std::cerr << "Errore esecuzione query: " << sqlite3_errmsg(db) << std::endl;
+    } else {
+        std::cout << "Sensore inserito con successo!" << std::endl;
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+    return;
 }
 
-bool Database::CheckNewSensor(unsigned char *eui)
+bool Database::CheckNewSensor(uint64_t eui)
 {
-    char *errorMessage = nullptr;
-    char query[512];
+    sqlite3_stmt *stmt;
+    std::string statement("SELECT EXISTS(SELECT 1 FROM sensors WHERE id = ?);");
 
-    // Converti eui in una stringa esadecimale
-    std::ostringstream oss;
-    for (int i = 0; i < 8; i++) {  // Supponiamo che EUI sia lungo 8 byte
-        oss << std::hex << std::setw(2) << std::setfill('0') << (int)eui[i];
-    }
-    std::string euiStr = oss.str();
+    //std::cerr << "entrato in checknewsensor\n "  << std::endl;
 
-    // Formatta la query
-    snprintf(query, sizeof(query), "SELECT EXISTS(SELECT 1 FROM sensors WHERE id = '%s');", euiStr.c_str());
-
-    if (sqlite3_exec(db, query, nullptr, nullptr, &errorMessage) != SQLITE_OK)
-    {
+    if (sqlite3_open("/home/pi/coap.db", &db) != SQLITE_OK) {
+        std::cerr << "Errore apertura database: " << sqlite3_errmsg(db) << std::endl;
         return false;
-    } 
-    return true;
+    }
+
+    if (sqlite3_prepare_v2(db, statement.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Errore preparazione query exists: " << sqlite3_errmsg(db) << std::endl;
+        sqlite3_close(db);
+        return false;
+    }
+
+    //std::cerr << "convertendo tmpEUI\n "  << std::endl;
+    // binda ogni campo del payload step by step
+    std::string tmpEui = std::to_string(eui);
+
+    std::cerr << "Eui dentro la query checknewsensor  " << tmpEui.c_str() << std::endl;
+    sqlite3_bind_text(stmt, 1, tmpEui.c_str(), -1, SQLITE_STATIC);
+
+    //std::cerr << "bindato tmpEUI\n "  << std::endl;
+
+    bool exists = false;
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        exists = sqlite3_column_int(stmt, 0);  
+        std::cerr << "eseguita statement, con risultato \n " <<std::boolalpha << exists << std::endl;    
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+    return exists;
 }
 
 

@@ -374,10 +374,6 @@ void RcpHost::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageIn
 
         Payload payload{};
 
-        payload.eui = new unsigned char[8];
-
-        memset(payload.eui,0,17);
-
         // from message.cpp / message.hpp
         unsigned char aBuf[otMessageGetLength(aMessage)];
 
@@ -388,21 +384,16 @@ void RcpHost::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageIn
 
         if (bytesread != 0)
         {
-
-            extractString(aBuf, &start_payload,8, payload.eui);
+            std::cerr << "parsando payload " << std::endl;
+            payload.eui = extractEui64(aBuf,&start_payload,8);
+            otbrLogInfo("eui : %llx\n",payload.eui);
+            std::cerr << "CONTROLLO NUOVO SENSORE " << std::endl;
             // check if the eui is a new sensor
-            bool newSensor = db.CheckNewSensor(payload.eui);
-
-            if(newSensor)
+            bool existsSensor = db.CheckNewSensor(payload.eui);
+            std::cerr << "sensore nuovo:" << std::boolalpha << existsSensor <<std::endl;
+            if(!existsSensor)
             {
-                char *erroredatabase = db.InsertSensor(payload.eui);
-                if(erroredatabase != nullptr)
-                {
-                    otbrLogEmerg("impossibile inserire il sensore");
-                }
-
-                // print the number of sensors into a file
-                
+                db.InsertSensor(payload.eui);                
             }   
 
             payload.pktnum = extractNumber(aBuf,&start_payload,2);
@@ -449,7 +440,7 @@ void RcpHost::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageIn
             payload.avg_gas_resistance =  gasReSum /10;
 
             // insert the payload into the table
-            char *erroredatabase = db.InsertData(payload);
+            const char *erroredatabase = db.InsertData(payload);
 
             if(erroredatabase != nullptr)
             {

@@ -27,6 +27,10 @@ uint16_t bytesToDecimal(unsigned char* data, uint16_t length);
 
 uint16_t extractNumber(unsigned char* number,uint16_t *start, uint16_t length);
 
+uint64_t extractEui64(unsigned char * number, uint16_t *start,uint16_t length);
+
+uint64_t bytesToDecimal64(unsigned char* data, uint16_t length);
+
 void extractString(const unsigned char* payload, uint16_t *start_byte, uint16_t length, char* output);
 
 #endif

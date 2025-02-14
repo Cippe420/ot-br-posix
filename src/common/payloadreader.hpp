@@ -5,7 +5,7 @@
 #include <cstddef>
 struct Payload{
                     // payload parser for the packets received
-                    unsigned char *eui;
+                    uint64_t eui;
                     uint16_t pktnum;
                     uint16_t timestamp;
                     uint16_t undef;
@@ -21,6 +21,10 @@ struct Payload{
 
 };
 
+
+uint64_t bytesToDecimal64(unsigned char* data, uint16_t length);
+
+uint64_t extractEui64(unsigned char * number, uint16_t *start,uint16_t length);
 
 uint16_t bytesToDecimal(unsigned char* data, uint16_t length);
 
