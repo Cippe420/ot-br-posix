@@ -237,11 +237,6 @@ void Database::SetSensorsState(std::vector<uint16_t> devicesMrloc16)
         return;
     }
 
-    if (sqlite3_prepare_v2(db, statement.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        std::cerr << "Errore preparazione query setSensorsState: " << sqlite3_errmsg(db) << std::endl;
-        sqlite3_close(db);
-        return;
-    }
     for(size_t i = 0; i < devicesMrloc16.size(); i++)
     {
         statement += std::to_string(devicesMrloc16[i]);
@@ -252,6 +247,14 @@ void Database::SetSensorsState(std::vector<uint16_t> devicesMrloc16)
     }
     statement += ");";
     std::cerr << "query da eseguire: " << statement << std::endl;
+
+    if (sqlite3_prepare_v2(db, statement.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        std::cerr << "Errore preparazione query setSensorsState: " << sqlite3_errmsg(db) << std::endl;
+        sqlite3_close(db);
+        return;
+    }
+
     if (sqlite3_exec(db, statement.c_str(), nullptr, nullptr, nullptr) != SQLITE_OK) {
         std::cerr << "Errore esecuzione query setSensorsState: " << sqlite3_errmsg(db) << std::endl;
     } else {

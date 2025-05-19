@@ -194,6 +194,7 @@ otbrError Application::Run(void)
             if (currentTime - lastTime > 10)
             {
                 lastTime = currentTime;
+                otbrLogInfo("Checking sensors state...");
                 // check the sensors state
                 mHost->CheckSensorsState(devicesMrloc16);
             }
