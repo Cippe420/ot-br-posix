@@ -1670,7 +1670,7 @@ template <> otError Interpreter::Process<Cmd("child")>(Arg aArgs[])
             static const char *const kChildTableTitles[] = {
                 "ID", "RLOC16", "Timeout", "Age", "LQ In",   "C_VN",    "R",
                 "D",  "N",      "Ver",     "CSL", "QMsgCnt", "Suprvsn", "Extended MAC",
-            };
+            }; 
 
             static const uint8_t kChildTableColumnWidths[] = {
                 5, 8, 12, 12, 7, 6, 1, 1, 1, 3, 3, 7, 7, 18,

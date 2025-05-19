@@ -57,6 +57,7 @@ target_include_directories(ot-config INTERFACE
     ${PROJECT_SOURCE_DIR}/src/core
 )
 
+set(TEST_BIG_ENDIAN_TYPES "int;unsigned short;uint32_t")
 include(TestBigEndian)
 TEST_BIG_ENDIAN(OT_BIG_ENDIAN)
 if(OT_BIG_ENDIAN)

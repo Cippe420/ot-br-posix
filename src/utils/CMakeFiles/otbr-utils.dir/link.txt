@@ -1,0 +1,2 @@
+/usr/bin/ar qc libotbr-utils.a "CMakeFiles/otbr-utils.dir/crc16.cpp.o" "CMakeFiles/otbr-utils.dir/dns_utils.cpp.o" "CMakeFiles/otbr-utils.dir/hex.cpp.o" "CMakeFiles/otbr-utils.dir/infra_link_selector.cpp.o" "CMakeFiles/otbr-utils.dir/pskc.cpp.o" "CMakeFiles/otbr-utils.dir/sha256.cpp.o" "CMakeFiles/otbr-utils.dir/socket_utils.cpp.o" "CMakeFiles/otbr-utils.dir/steering_data.cpp.o" "CMakeFiles/otbr-utils.dir/string_utils.cpp.o" "CMakeFiles/otbr-utils.dir/system_utils.cpp.o" "CMakeFiles/otbr-utils.dir/thread_helper.cpp.o"
+/usr/bin/ranlib libotbr-utils.a

@@ -197,7 +197,72 @@ bool Database::CheckNewSensor(uint64_t eui)
     sqlite3_close(db);
     return exists;
 }
+// TODO:  check correctness
+std::vector<uint64_t> Database::GetEuiSensors()
+{
+    sqlite3_stmt *stmt;
+    std::string statement("SELECT id FROM sensors;");
+    std::vector<uint64_t> euis;
 
+    if (sqlite3_open("/home/pi/coap.db", &db) != SQLITE_OK) {
+        std::cerr << "Errore apertura database: " << sqlite3_errmsg(db) << std::endl;
+        return euis;
+    }
+
+    if (sqlite3_prepare_v2(db, statement.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Errore preparazione query getEuiSensors: " << sqlite3_errmsg(db) << std::endl;
+        sqlite3_close(db);
+        return euis;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        uint64_t eui = sqlite3_column_int64(stmt, 0);
+        euis.push_back(eui);
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+    return euis;
+}
+
+//TODO: check correctness, the function should update sensors state to 'dead'
+//if they are not in the tables of the border router
+void Database::SetSensorsState(std::vector<uint16_t> devicesMrloc16)
+{
+    sqlite3_stmt *stmt;
+    std::string statement("UPDATE sensors SET state = 'dead' WHERE id NOT IN (");
+
+    if (sqlite3_open("/home/pi/coap.db", &db) != SQLITE_OK) {
+        std::cerr << "Errore apertura database: " << sqlite3_errmsg(db) << std::endl;
+        return;
+    }
+
+    if (sqlite3_prepare_v2(db, statement.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Errore preparazione query setSensorsState: " << sqlite3_errmsg(db) << std::endl;
+        sqlite3_close(db);
+        return;
+    }
+    for(size_t i = 0; i < devicesMrloc16.size(); i++)
+    {
+        statement += std::to_string(devicesMrloc16[i]);
+        if (i != devicesMrloc16.size() - 1) {
+            statement += ",";
+        }
+
+    }
+    statement += ");";
+    std::cerr << "query da eseguire: " << statement << std::endl;
+    if (sqlite3_exec(db, statement.c_str(), nullptr, nullptr, nullptr) != SQLITE_OK) {
+        std::cerr << "Errore esecuzione query setSensorsState: " << sqlite3_errmsg(db) << std::endl;
+    } else {
+        std::cout << "Stato dei sensori aggiornato con successo!" << std::endl;
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+
+
+}
 
 void Database::printError() {
     if (db != nullptr) {

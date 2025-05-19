@@ -1,0 +1,2 @@
+/usr/bin/ar qc libotbr-trel-dnssd.a "CMakeFiles/otbr-trel-dnssd.dir/trel_dnssd.cpp.o"
+/usr/bin/ranlib libotbr-trel-dnssd.a

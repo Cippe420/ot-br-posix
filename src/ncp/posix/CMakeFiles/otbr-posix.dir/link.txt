@@ -1,0 +1,2 @@
+/usr/bin/ar qc libotbr-posix.a "CMakeFiles/otbr-posix.dir/netif.cpp.o" "CMakeFiles/otbr-posix.dir/netif_linux.cpp.o" "CMakeFiles/otbr-posix.dir/netif_unix.cpp.o"
+/usr/bin/ranlib libotbr-posix.a

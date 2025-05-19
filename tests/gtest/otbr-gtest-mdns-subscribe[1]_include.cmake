@@ -1,0 +1,5 @@
+if(EXISTS "/home/zangoose/Pubblici/ot-br-posix/tests/gtest/otbr-gtest-mdns-subscribe[1]_tests.cmake")
+  include("/home/zangoose/Pubblici/ot-br-posix/tests/gtest/otbr-gtest-mdns-subscribe[1]_tests.cmake")
+else()
+  add_test(otbr-gtest-mdns-subscribe_NOT_BUILT otbr-gtest-mdns-subscribe_NOT_BUILT)
+endif()

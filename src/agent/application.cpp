@@ -159,6 +159,9 @@ otbrError Application::Run(void)
     // allow quitting elegantly
     signal(SIGTERM, HandleSignal);
 
+    time_t lastTime = time(0);
+    std::vector<uint16_t> devicesMrloc16;
+
     while (!sShouldTerminate)
     {
         otbr::MainloopContext mainloop;
@@ -170,7 +173,7 @@ otbrError Application::Run(void)
         FD_ZERO(&mainloop.mReadFdSet);
         FD_ZERO(&mainloop.mWriteFdSet);
         FD_ZERO(&mainloop.mErrorFdSet);
-
+        
         MainloopManager::GetInstance().Update(mainloop);
 
         rval = select(mainloop.mMaxFd + 1, &mainloop.mReadFdSet, &mainloop.mWriteFdSet, &mainloop.mErrorFdSet,
@@ -179,7 +182,21 @@ otbrError Application::Run(void)
         if (rval >= 0)
         {
             MainloopManager::GetInstance().Process(mainloop);
+            // while processing the mainloops, the app could check if the sensors are still alive, by checking the table of nodes,
+            // i.e calling the cli api to get router table and child table, this might not return every node of the network
+            // like a child connected to a router
+            // otherwise it can check the last time he received a message from every sensor and compare with actual time
+            // if the time is too long, it can assume that the sensor is not alive anymore
+            //
+            time_t currentTime = time(0);
 
+            // check the sensor state every 10 seconds
+            if (currentTime - lastTime > 10)
+            {
+                lastTime = currentTime;
+                // check the sensors state
+                mHost->CheckSensorsState(devicesMrloc16);
+            }
 #if __linux__
             {
                 const char *newInfraLink = mInfraLinkSelector.Select();

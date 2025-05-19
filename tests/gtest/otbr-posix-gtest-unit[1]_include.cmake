@@ -1,0 +1,5 @@
+if(EXISTS "/home/zangoose/Pubblici/ot-br-posix/tests/gtest/otbr-posix-gtest-unit[1]_tests.cmake")
+  include("/home/zangoose/Pubblici/ot-br-posix/tests/gtest/otbr-posix-gtest-unit[1]_tests.cmake")
+else()
+  add_test(otbr-posix-gtest-unit_NOT_BUILT otbr-posix-gtest-unit_NOT_BUILT)
+endif()

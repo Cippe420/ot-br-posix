@@ -146,7 +146,7 @@ public:
 
     // starts the coap resources and handlers
     virtual void StartCoapServer(void) = 0;
-
+    virtual void CheckSensorsState(std::vector<uint16_t> devicesMrloc16) = 0;
     /**
      * Returns the co-processor version string.
      */

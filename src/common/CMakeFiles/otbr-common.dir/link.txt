@@ -1,0 +1,2 @@
+/usr/bin/ar qc libotbr-common.a "CMakeFiles/otbr-common.dir/api_strings.cpp.o" "CMakeFiles/otbr-common.dir/code_utils.cpp.o" "CMakeFiles/otbr-common.dir/dns_utils.cpp.o" "CMakeFiles/otbr-common.dir/logging.cpp.o" "CMakeFiles/otbr-common.dir/mainloop.cpp.o" "CMakeFiles/otbr-common.dir/mainloop_manager.cpp.o" "CMakeFiles/otbr-common.dir/task_runner.cpp.o" "CMakeFiles/otbr-common.dir/types.cpp.o"
+/usr/bin/ranlib libotbr-common.a

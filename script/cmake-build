@@ -69,7 +69,7 @@ OTBR_TARGET=${OTBR_TARGET-}
 main()
 {
     local builddir="${OTBR_BUILD_DIR:-${OTBR_TOP_BUILD_DIR}}"
-
+    echo "OTBR_BUILD_DIR=${builddir}"
     mkdir -p "${builddir}"
 
     (

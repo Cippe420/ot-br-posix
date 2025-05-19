@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/mnt/hdd/ot-br-posix/_deps/googletest-subbuild/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

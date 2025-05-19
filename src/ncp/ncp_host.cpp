@@ -110,6 +110,11 @@ void NcpHost::StartCoapServer(void)
     /*empty*/
 }
 
+void NcpHost::CheckSensorsState(std::vector<uint16_t> devicesMrloc16)
+{
+	/*empty*/
+	OT_UNUSED_VARIABLE(devicesMrloc16);
+}
 
 void NcpHost::HandleRequest(void *aContext,otMessage *aMessage,const otMessageInfo *aMessageInfo)
 {

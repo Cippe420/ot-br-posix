@@ -1,0 +1,2 @@
+/usr/bin/ar qc libotbr-mdns.a "CMakeFiles/otbr-mdns.dir/mdns.cpp.o" "CMakeFiles/otbr-mdns.dir/mdns_avahi.cpp.o"
+/usr/bin/ranlib libotbr-mdns.a

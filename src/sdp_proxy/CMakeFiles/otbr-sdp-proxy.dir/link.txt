@@ -1,0 +1,2 @@
+/usr/bin/ar qc libotbr-sdp-proxy.a "CMakeFiles/otbr-sdp-proxy.dir/advertising_proxy.cpp.o" "CMakeFiles/otbr-sdp-proxy.dir/discovery_proxy.cpp.o"
+/usr/bin/ranlib libotbr-sdp-proxy.a

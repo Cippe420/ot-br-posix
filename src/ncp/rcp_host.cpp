@@ -31,17 +31,20 @@
 
 #include "ncp/rcp_host.hpp"
 
+#include <algorithm>
 #include <assert.h>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 #include <stdio.h>
 #include <string.h>
 #include <vector>
-#include <sstream>
-#include <iostream>
-#include <fstream>
-#include <algorithm>
 
+#include <fstream>
+#include <iostream>
 #include <openthread/backbone_router_ftd.h>
 #include <openthread/border_routing.h>
+#include <openthread/coap.h>
 #include <openthread/dataset.h>
 #include <openthread/dataset_ftd.h>
 #include <openthread/dnssd_server.h>
@@ -57,21 +60,15 @@
 #include <openthread/platform/misc.h>
 #include <openthread/platform/radio.h>
 #include <openthread/platform/settings.h>
-#include <openthread/coap.h>
-#include <iostream>
-#include <fstream>
 
 #include "common/code_utils.hpp"
+#include "common/database.hpp"
 #include "common/logging.hpp"
 #include "common/types.hpp"
-#include "common/database.hpp"
 
 #if OTBR_ENABLE_FEATURE_FLAGS
 #include "proto/feature_flag.pb.h"
 #endif
-
-
-
 
 namespace otbr {
 namespace Ncp {
@@ -307,7 +304,7 @@ otError RcpHost::ApplyFeatureFlagList(const FeatureFlagList &aFeatureFlagList)
 //     file.open("home/pi/log.txt");
 //     file << "setNetworkParameters\n";
 //     file.close();
-// }    
+// }
 
 // define enum types for yaml parsing
 enum otDatasetParameter
@@ -321,12 +318,11 @@ enum otDatasetParameter
     undefined
 };
 
-
 std::vector<std::string> split(const std::string &str, char delimiter)
 {
     std::vector<std::string> tokens;
-    std::string token;
-    std::istringstream tokenStream(str); // Crea un flusso di input dalla stringa
+    std::string              token;
+    std::istringstream       tokenStream(str); // Crea un flusso di input dalla stringa
 
     // Continua a leggere fino a che ci sono parti separate dal delimitatore
     while (std::getline(tokenStream, token, delimiter))
@@ -356,28 +352,25 @@ otDatasetParameter hashit(std::string const &inString)
         return undefined;
 }
 
-
-void RcpHost::HandleRequest(void *aContext,otMessage *aMessage,const otMessageInfo *aMessageInfo)
+void RcpHost::HandleRequest(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo)
 {
-
-    static_cast<RcpHost *>(aContext) ->HandleRequest(aMessage,aMessageInfo);
+    static_cast<RcpHost *>(aContext)->HandleRequest(aMessage, aMessageInfo);
 }
 
 void RcpHost::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageInfo)
 {
-
     OT_UNUSED_VARIABLE(aMessageInfo);
-    char name[] = "/home/pi/coap.db"; 
+    char     name[] = "/home/pi/coap.db";
     Database db(name);
 
-    if(db.connect()){
-
+    if (db.connect())
+    {
         Payload payload{};
 
         // from message.cpp / message.hpp
         unsigned char aBuf[otMessageGetLength(aMessage)];
 
-        uint16_t bytesread = otMessageRead(aMessage,0,aBuf,otMessageGetLength(aMessage));
+        uint16_t bytesread = otMessageRead(aMessage, 0, aBuf, otMessageGetLength(aMessage));
 
         uint16_t start_payload = otMessageGetOffset(aMessage);
         // allocating mem for eui
@@ -385,77 +378,73 @@ void RcpHost::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageIn
         if (bytesread != 0)
         {
             std::cerr << "parsando payload " << std::endl;
-            payload.eui = extractEui64(aBuf,&start_payload,8);
-            otbrLogInfo("eui : %llx\n",payload.eui);
+            payload.eui = extractEui64(aBuf, &start_payload, 8);
+            otbrLogInfo("eui : %llx\n", payload.eui);
             std::cerr << "CONTROLLO NUOVO SENSORE " << std::endl;
             // check if the eui is a new sensor
             bool existsSensor = db.CheckNewSensor(payload.eui);
-            std::cerr << "esiste il sensore:" << std::boolalpha << existsSensor <<std::endl;
-            if(!existsSensor)
+            std::cerr << "esiste il sensore:" << std::boolalpha << existsSensor << std::endl;
+            if (!existsSensor)
             {
-                db.InsertSensor(payload.eui);                
-            }   
-
-            payload.pktnum = extractNumber(aBuf,&start_payload,2);
-            payload.timestamp = extractNumber(aBuf,&start_payload,4);
-            payload.undef = extractNumber(aBuf,&start_payload,1);
-            uint16_t temperature_raw = extractNumber(aBuf,&start_payload,2);
-            payload.temperature = -45.0 + 175.0 * temperature_raw / (1 << 16);
-            uint16_t humidity_raw = extractNumber(aBuf,&start_payload, 2);
-            payload.humidity = humidity_raw * 100.0 / (1 << 16);
-            uint16_t ir_raw = extractNumber(aBuf,&start_payload,2);
-            payload.ir = ir_raw / 0.5;
-            uint16_t vis_raw = extractNumber(aBuf,&start_payload,2);
-            payload.vis = vis_raw / 0.5;
-            uint16_t batt_raw = extractNumber(aBuf,&start_payload,2);
-            payload.batt = (((batt_raw >> 4) & 0xF)) + ((batt_raw & 0xF) / 1000);
-            double temperatureSum;
-            for (int i = 0; i<10;i++)
-            {
-                uint16_t tmpraw = extractNumber(aBuf,&start_payload,4);
-                temperatureSum += tmpraw/100.0;
-
+                db.InsertSensor(payload.eui);
             }
-            payload.avg_temperature = temperatureSum / 10;    
-            double humiditySum;
-            for (int i = 0 ; i<10; i++)
+
+            payload.pktnum           = extractNumber(aBuf, &start_payload, 2);
+            payload.timestamp        = extractNumber(aBuf, &start_payload, 4);
+            payload.undef            = extractNumber(aBuf, &start_payload, 1);
+            uint16_t temperature_raw = extractNumber(aBuf, &start_payload, 2);
+            payload.temperature      = -45.0 + 175.0 * temperature_raw / (1 << 16);
+            uint16_t humidity_raw    = extractNumber(aBuf, &start_payload, 2);
+            payload.humidity         = humidity_raw * 100.0 / (1 << 16);
+            uint16_t ir_raw          = extractNumber(aBuf, &start_payload, 2);
+            payload.ir               = ir_raw / 0.5;
+            uint16_t vis_raw         = extractNumber(aBuf, &start_payload, 2);
+            payload.vis              = vis_raw / 0.5;
+            uint16_t batt_raw        = extractNumber(aBuf, &start_payload, 2);
+            payload.batt             = (((batt_raw >> 4) & 0xF)) + ((batt_raw & 0xF) / 1000);
+            double temperatureSum;
+            for (int i = 0; i < 10; i++)
             {
-                uint16_t hum = extractNumber(aBuf,&start_payload,8);
-                humiditySum += hum/1000.0;
+                uint16_t tmpraw = extractNumber(aBuf, &start_payload, 4);
+                temperatureSum += tmpraw / 100.0;
+            }
+            payload.avg_temperature = temperatureSum / 10;
+            double humiditySum;
+            for (int i = 0; i < 10; i++)
+            {
+                uint16_t hum = extractNumber(aBuf, &start_payload, 8);
+                humiditySum += hum / 1000.0;
             }
             payload.avg_humidity = humiditySum / 10;
             double pressureSum;
-            for(int i=0; i<10;i++)
+            for (int i = 0; i < 10; i++)
             {
-                uint64_t pressure = extractNumber(aBuf,&start_payload,8);
+                uint64_t pressure = extractNumber(aBuf, &start_payload, 8);
                 pressureSum += pressure;
             }
-            payload.avg_pressure = pressureSum/10.0;                    
+            payload.avg_pressure = pressureSum / 10.0;
             double gasReSum;
-            for(int i =0;i<10;i++)
+            for (int i = 0; i < 10; i++)
             {
-                uint64_t gas_res = extractNumber(aBuf,&start_payload,8);
+                uint64_t gas_res = extractNumber(aBuf, &start_payload, 8);
                 gasReSum += gas_res;
             }
-            payload.avg_gas_resistance =  gasReSum /10;
+            payload.avg_gas_resistance = gasReSum / 10;
 
             // insert the payload into the table
             const char *erroredatabase = db.InsertData(payload);
 
-            if(erroredatabase != nullptr)
+            if (erroredatabase != nullptr)
             {
                 otbrLogEmerg("impossibile inserire il payload \n");
             }
-
         }
-
-    }else
+    }
+    else
     {
         otbrLogEmerg("impossibile connettersi al database\n");
     }
-
 }
-
 
 void RcpHost::SetNetworkParameters()
 {
@@ -463,12 +452,10 @@ void RcpHost::SetNetworkParameters()
     std::ifstream file(DATASET_CONFIG_FILE);
     fileoutput.open("home/pi/log.txt");
 
-    otError error = OT_ERROR_NONE;
-	otOperationalDataset aDataset;
+    otError              error = OT_ERROR_NONE;
+    otOperationalDataset aDataset;
 
-
-    error = otDatasetCreateNewNetwork(mInstance, &aDataset); 
-
+    error = otDatasetCreateNewNetwork(mInstance, &aDataset);
 
     // if file can't be opened, log emergency and exit with errors
     if (!file)
@@ -481,7 +468,6 @@ void RcpHost::SetNetworkParameters()
 
     while (std::getline(file, line))
     {
-
         // TODO: check for the correct format on input
         std::vector<std::string> result = split(line, ':');
         result[1].erase(remove(result[1].begin(), result[1].end(), ' '), result[1].end());
@@ -489,95 +475,89 @@ void RcpHost::SetNetworkParameters()
 
         if (result.size() >= 2)
         {
-
             switch (hashit(result[0]))
-            {   
-                    
-                case networkname:
-                {
-                    std::cout << result[1] << std::endl;
-                    // TODO: parse correctly the name from yaml to aNetworkName
-                    //static char aNetworkName[] = "OpenThreadDemo";
-                    //size_t length = strlen(aNetworkName);
-                    size_t length = result[1].length();
-                    assert(length <= OT_NETWORK_NAME_MAX_SIZE);
-                    //memcpy(aDataset.mNetworkName.m8, aNetworkName, length);
+            {
+            case networkname:
+            {
+                std::cout << result[1] << std::endl;
+                // TODO: parse correctly the name from yaml to aNetworkName
+                // static char aNetworkName[] = "OpenThreadDemo";
+                // size_t length = strlen(aNetworkName);
+                size_t length = result[1].length();
+                assert(length <= OT_NETWORK_NAME_MAX_SIZE);
+                // memcpy(aDataset.mNetworkName.m8, aNetworkName, length);
 
-                    memcpy(aDataset.mNetworkName.m8, result[1].c_str(), length);
-                    aDataset.mComponents.mIsNetworkNamePresent = true;
-                    break;
-                }
-                case channel:
-                {
-                    aDataset.mChannel = std::stoi(result[1].c_str());
-                    aDataset.mComponents.mIsChannelPresent = true;
-                    break;
-                }
-                case panid:
-                {
-                    uint16_t panId = static_cast<uint16_t>(std::stoul(result[1], nullptr, 16));
-                    aDataset.mPanId = (otPanId) panId;
-                    aDataset.mComponents.mIsPanIdPresent = true;
-                    break;
-                }
-                case extpanid:
-                {
-                    uint8_t extPanId[OT_EXT_PAN_ID_SIZE];
-                    for(size_t i =0; i<OT_EXT_PAN_ID_SIZE; ++i)
-                    {
-                        std::string byteStr = result[1].substr(i*2,2);
-                        extPanId[i]= static_cast<uint8_t>(std::stoul(byteStr, nullptr, 16));
-                    }
-                    memcpy(aDataset.mExtendedPanId.m8,extPanId,sizeof(aDataset.mExtendedPanId));
-                    aDataset.mComponents.mIsExtendedPanIdPresent = true;
-                    break;
-                }
-                case networkkey:
-                {
-                    uint8_t networkkey[OT_NETWORK_KEY_SIZE];
-                    for(size_t i=0; i< OT_NETWORK_KEY_SIZE;++i)
-                    {
-                        std::string netkey = result[1].substr(i*2,2);
-                        networkkey[i]= static_cast<uint8_t>(std::stoul(netkey, nullptr, 16));
-                    }
-                    //std::string networkkeyStr = result[1];
-                    memcpy(aDataset.mNetworkKey.m8,networkkey, sizeof(aDataset.mNetworkKey));
-                    aDataset.mComponents.mIsNetworkKeyPresent = true;
-                    break;
-                }
-                case pskc:
-                {
-
-                    error = otDatasetGeneratePskc(
-                              result[1].c_str(),
-                              reinterpret_cast<const otNetworkName *>(otThreadGetNetworkName(mInstance)),
-                              otThreadGetExtendedPanId(mInstance), &aDataset.mPskc);
-
-                    if (error != OT_ERROR_NONE)
-                    {
-                        return;
-                    }
-                    aDataset.mComponents.mIsPskcPresent = true;
-                    break;
-                }
-                case undefined:
-                {
-                    break;
-                }
+                memcpy(aDataset.mNetworkName.m8, result[1].c_str(), length);
+                aDataset.mComponents.mIsNetworkNamePresent = true;
+                break;
             }
-            
+            case channel:
+            {
+                aDataset.mChannel                      = std::stoi(result[1].c_str());
+                aDataset.mComponents.mIsChannelPresent = true;
+                break;
+            }
+            case panid:
+            {
+                uint16_t panId                       = static_cast<uint16_t>(std::stoul(result[1], nullptr, 16));
+                aDataset.mPanId                      = (otPanId)panId;
+                aDataset.mComponents.mIsPanIdPresent = true;
+                break;
+            }
+            case extpanid:
+            {
+                uint8_t extPanId[OT_EXT_PAN_ID_SIZE];
+                for (size_t i = 0; i < OT_EXT_PAN_ID_SIZE; ++i)
+                {
+                    std::string byteStr = result[1].substr(i * 2, 2);
+                    extPanId[i]         = static_cast<uint8_t>(std::stoul(byteStr, nullptr, 16));
+                }
+                memcpy(aDataset.mExtendedPanId.m8, extPanId, sizeof(aDataset.mExtendedPanId));
+                aDataset.mComponents.mIsExtendedPanIdPresent = true;
+                break;
+            }
+            case networkkey:
+            {
+                uint8_t networkkey[OT_NETWORK_KEY_SIZE];
+                for (size_t i = 0; i < OT_NETWORK_KEY_SIZE; ++i)
+                {
+                    std::string netkey = result[1].substr(i * 2, 2);
+                    networkkey[i]      = static_cast<uint8_t>(std::stoul(netkey, nullptr, 16));
+                }
+                // std::string networkkeyStr = result[1];
+                memcpy(aDataset.mNetworkKey.m8, networkkey, sizeof(aDataset.mNetworkKey));
+                aDataset.mComponents.mIsNetworkKeyPresent = true;
+                break;
+            }
+            case pskc:
+            {
+                error = otDatasetGeneratePskc(
+                    result[1].c_str(), reinterpret_cast<const otNetworkName *>(otThreadGetNetworkName(mInstance)),
+                    otThreadGetExtendedPanId(mInstance), &aDataset.mPskc);
+
+                if (error != OT_ERROR_NONE)
+                {
+                    return;
+                }
+                aDataset.mComponents.mIsPskcPresent = true;
+                break;
+            }
+            case undefined:
+            {
+                break;
+            }
+            }
         }
-
-
     }
     file.close();
     fileoutput.close();
 
-    uint8_t mlp[OT_IP6_PREFIX_SIZE] = {0xfd, 0x30, 0x93, 0xd7,  // fd30:93d7
-    0x91, 0x54, 0xb7, 0xc2  // 9154:b7c2
+    uint8_t mlp[OT_IP6_PREFIX_SIZE] = {
+        0xfd, 0x30, 0x93, 0xd7, // fd30:93d7
+        0x91, 0x54, 0xb7, 0xc2  // 9154:b7c2
     };
 
-    memcpy(aDataset.mMeshLocalPrefix.m8,mlp, sizeof(aDataset.mMeshLocalPrefix.m8));
+    memcpy(aDataset.mMeshLocalPrefix.m8, mlp, sizeof(aDataset.mMeshLocalPrefix.m8));
 
     aDataset.mActiveTimestamp.mSeconds             = 1;
     aDataset.mActiveTimestamp.mTicks               = 0;
@@ -590,19 +570,18 @@ void RcpHost::SetNetworkParameters()
 
     error = otThreadBecomeLeader(mInstance);
 
-    if(error){
-        printf("error:%s\n",otThreadErrorToString(error));
+    if (error)
+    {
+        printf("error:%s\n", otThreadErrorToString(error));
     }
 
-    error=otCoapStart(mInstance, OT_DEFAULT_COAP_PORT);
+    error = otCoapStart(mInstance, OT_DEFAULT_COAP_PORT);
 
-    if(error)
+    if (error)
     {
-        
         fileoutput.open("home/pi/log.txt");
         fileoutput << "there was an error!\n";
         fileoutput.close();
-
     }
 }
 
@@ -614,7 +593,6 @@ void RcpHost::StartCoapServer()
 
     otCoapAddResource(mInstance, &mResource);
 }
-
 
 void RcpHost::Deinit(void)
 {
@@ -723,6 +701,53 @@ const char *RcpHost::GetThreadVersion(void)
         exit(-1);
     }
     return version;
+}
+
+void RcpHost::CheckSensorsState(std::vector<uint16_t> devicesMrloc16)
+{
+
+    otError error = OT_ERROR_NONE;
+    otChildInfo childInfo;
+    uint16_t  childId,maxChildren;
+    otRouterInfo routerInfo;
+    uint16_t routerId;
+    uint8_t maxRouterId;
+
+
+    maxChildren = otThreadGetMaxAllowedChildren(mInstance);
+    
+    for (uint16_t i=0; i<maxChildren; i++)
+    {
+        error = otThreadGetChildInfoByIndex(mInstance, i, &childInfo);
+        if (error == OT_ERROR_NONE)
+        {
+            childId = childInfo.mRloc16;
+            std::cerr << "childId: " << childId << std::endl;
+            devicesMrloc16.push_back(childId);
+        }
+    }
+
+    maxRouterId = otThreadGetMaxRouterId(mInstance);
+    for (uint8_t i=0; i<maxRouterId; i++)
+    {
+        error = otThreadGetRouterInfo(mInstance, i, &routerInfo);
+        if (error == OT_ERROR_NONE)
+        {
+            routerId = routerInfo.mRloc16;
+            std::cerr << "routerId: " << routerId << std::endl;
+            devicesMrloc16.push_back(routerId);
+        }
+    }
+    
+    Database db("home/pi/coap.db");
+    if (db.connect())
+    {
+        db.SetSensorsState(devicesMrloc16);
+    }
+    else
+    {
+        otbrLogEmerg("impossibile connettersi al database\n");
+    }
 }
 
 void RcpHost::Join(const otOperationalDatasetTlvs &aActiveOpDatasetTlvs, const AsyncResultReceiver &aReceiver)

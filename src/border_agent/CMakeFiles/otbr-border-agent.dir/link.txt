@@ -1,0 +1,2 @@
+/usr/bin/ar qc libotbr-border-agent.a "CMakeFiles/otbr-border-agent.dir/border_agent.cpp.o"
+/usr/bin/ranlib libotbr-border-agent.a

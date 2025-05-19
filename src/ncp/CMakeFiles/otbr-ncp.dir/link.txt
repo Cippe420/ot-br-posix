@@ -1,0 +1,2 @@
+/usr/bin/ar qc libotbr-ncp.a "CMakeFiles/otbr-ncp.dir/async_task.cpp.o" "CMakeFiles/otbr-ncp.dir/ncp_host.cpp.o" "CMakeFiles/otbr-ncp.dir/ncp_spinel.cpp.o" "CMakeFiles/otbr-ncp.dir/rcp_host.cpp.o" "CMakeFiles/otbr-ncp.dir/thread_host.cpp.o"
+/usr/bin/ranlib libotbr-ncp.a
