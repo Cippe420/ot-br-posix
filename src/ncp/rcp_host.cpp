@@ -382,13 +382,13 @@ void RcpHost::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageIn
             otbrLogInfo("eui : %llx\n", payload.eui);
             std::cerr << "CONTROLLO NUOVO SENSORE " << std::endl;
             // check if the eui is a new sensor
-            bool existsSensor = db.CheckNewSensor(payload.eui);
+            // bool existsSensor = db.CheckNewSensor(payload.eui);
             std::cerr << "esiste il sensore:" << std::boolalpha << existsSensor << std::endl;
-            if (!existsSensor)
-            {
-                db.InsertSensor(payload.eui);
-            }
-
+            // if (!existsSensor)
+            // {
+            //     db.InsertSensor(payload.eui);
+            // }
+            //
             payload.pktnum           = extractNumber(aBuf, &start_payload, 2);
             payload.timestamp        = extractNumber(aBuf, &start_payload, 4);
             payload.undef            = extractNumber(aBuf, &start_payload, 1);
@@ -705,18 +705,16 @@ const char *RcpHost::GetThreadVersion(void)
 
 void RcpHost::CheckSensorsState(std::vector<uint16_t> devicesMrloc16)
 {
-
-    otError error = OT_ERROR_NONE;
-    otChildInfo childInfo;
-    uint16_t  childId,maxChildren;
+    otError      error = OT_ERROR_NONE;
+    otChildInfo  childInfo;
+    uint16_t     childId, maxChildren;
     otRouterInfo routerInfo;
-    uint16_t routerId;
-    uint8_t maxRouterId;
-
+    uint16_t     routerId;
+    uint8_t      maxRouterId;
 
     maxChildren = otThreadGetMaxAllowedChildren(mInstance);
-    
-    for (uint16_t i=0; i<maxChildren; i++)
+
+    for (uint16_t i = 0; i < maxChildren; i++)
     {
         error = otThreadGetChildInfoByIndex(mInstance, i, &childInfo);
         if (error == OT_ERROR_NONE)
@@ -728,7 +726,7 @@ void RcpHost::CheckSensorsState(std::vector<uint16_t> devicesMrloc16)
     }
 
     maxRouterId = otThreadGetMaxRouterId(mInstance);
-    for (uint8_t i=0; i<maxRouterId; i++)
+    for (uint8_t i = 0; i < maxRouterId; i++)
     {
         error = otThreadGetRouterInfo(mInstance, i, &routerInfo);
         if (error == OT_ERROR_NONE)
@@ -738,7 +736,7 @@ void RcpHost::CheckSensorsState(std::vector<uint16_t> devicesMrloc16)
             devicesMrloc16.push_back(routerId);
         }
     }
-    
+
     Database db("home/pi/coap.db");
     if (db.connect())
     {

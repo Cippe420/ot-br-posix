@@ -23,8 +23,8 @@ public:
     void        disconnect(void);
     int         CreateTables(void);
     const char *InsertData(Payload payload);
-    bool        CheckNewSensor(uint64_t eui);
-    void        InsertSensor(uint64_t eui);
+    bool        CheckNewSensor(uint16_t eui);
+    void        InsertSensor(uint16_t eui);
     void        SetSensorsState(std::vector<uint16_t> mRloc16);
     std::vector<uint64_t> GetEuiSensors(void);
     

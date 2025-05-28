@@ -128,7 +128,7 @@ const char *Database::InsertData(Payload payload)
     return nullptr;
 }
 
-void Database::InsertSensor(uint64_t eui)
+void Database::InsertSensor(uint16_t eui)
 {
     sqlite3_stmt *stmt;
 
@@ -160,7 +160,7 @@ void Database::InsertSensor(uint64_t eui)
     return;
 }
 
-bool Database::CheckNewSensor(uint64_t eui)
+bool Database::CheckNewSensor(uint16_t eui)
 {
     sqlite3_stmt *stmt;
     std::string statement("SELECT EXISTS(SELECT 1 FROM sensors WHERE id = ?);");
@@ -225,8 +225,7 @@ std::vector<uint64_t> Database::GetEuiSensors()
     return euis;
 }
 
-//TODO: check correctness, the function should update sensors state to 'dead'
-//if they are not in the tables of the border router
+//TODO: automatically sets the table,remove the packet routine
 void Database::SetSensorsState(std::vector<uint16_t> devicesMrloc16)
 {
     sqlite3_stmt *stmt;
@@ -240,6 +239,14 @@ void Database::SetSensorsState(std::vector<uint16_t> devicesMrloc16)
     for(size_t i = 0; i < devicesMrloc16.size(); i++)
     {
         statement += std::to_string(devicesMrloc16[i]);
+        if (CheckNewSensor(devicesMrloc16[i]) == false)
+        {
+            InsertSensor(devicesMrloc16[i]);
+        }else
+        {
+            // Set sensor state to active
+        }
+
         if (i != devicesMrloc16.size() - 1) {
             statement += ",";
         }
