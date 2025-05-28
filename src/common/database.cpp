@@ -253,7 +253,7 @@ void Database::SetSensorsState(std::vector<uint16_t> devicesMrloc16)
         return;
     }
 
-    std::string statement("UPDATE sensors SET state = 'dead' WHERE id NOT IN (");
+    std::string statement("UPDATE sensors SET state = CASE WHEN id IN (");
     // if (sqlite3_open("/home/pi/coap.db", &db) != SQLITE_OK)
     // {
     //     std::cerr << "Errore apertura database: " << sqlite3_errmsg(db) << std::endl;
@@ -277,7 +277,7 @@ void Database::SetSensorsState(std::vector<uint16_t> devicesMrloc16)
             statement += ",";
         }
     }
-    statement += ");";
+    statement += ") THEN 'active' ELSE 'dead' END;";
     std::cerr << "query da eseguire: " << statement << std::endl;
     //
     // if (sqlite3_exec(db, statement.c_str(), nullptr, nullptr, nullptr) != SQLITE_OK)
