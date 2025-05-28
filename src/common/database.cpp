@@ -247,12 +247,18 @@ std::vector<uint64_t> Database::GetEuiSensors()
 // TODO: automatically sets the table,remove the packet routine
 void Database::SetSensorsState(std::vector<uint16_t> devicesMrloc16)
 {
-    std::string statement("UPDATE sensors SET state = 'dead' WHERE id NOT IN (");
-    if (sqlite3_open("/home/pi/coap.db", &db) != SQLITE_OK)
+    if (devicesMrloc16.empty())
     {
-        std::cerr << "Errore apertura database: " << sqlite3_errmsg(db) << std::endl;
+        std::cerr << "Nessun dispositivo trovato per aggiornare lo stato dei sensori." << std::endl;
         return;
     }
+
+    std::string statement("UPDATE sensors SET state = 'dead' WHERE id NOT IN (");
+    // if (sqlite3_open("/home/pi/coap.db", &db) != SQLITE_OK)
+    // {
+    //     std::cerr << "Errore apertura database: " << sqlite3_errmsg(db) << std::endl;
+    //     return;
+    // }
 
     for (size_t i = 0; i < devicesMrloc16.size(); i++)
     {
@@ -280,6 +286,17 @@ void Database::SetSensorsState(std::vector<uint16_t> devicesMrloc16)
     //     sqlite3_close(db);
     //     return;
     // }
+    if (sqlite3_open("/home/pi/coap.db", &db) != SQLITE_OK)
+    {
+        std::cerr << "Errore apertura database: " << sqlite3_errmsg(db) << std::endl;
+        return;
+    }
+
+    if (db == nullptr)
+    {
+        std::cerr << "Database non connesso." << std::endl;
+        return;
+    }
 
     if (sqlite3_exec(db, statement.c_str(), nullptr, nullptr, nullptr) != SQLITE_OK)
     {
