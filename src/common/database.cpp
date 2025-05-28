@@ -247,9 +247,7 @@ std::vector<uint64_t> Database::GetEuiSensors()
 // TODO: automatically sets the table,remove the packet routine
 void Database::SetSensorsState(std::vector<uint16_t> devicesMrloc16)
 {
-    sqlite3_stmt *stmt;
-    std::string   statement("UPDATE sensors SET state = 'dead' WHERE id NOT IN (");
-
+    std::string statement("UPDATE sensors SET state = 'dead' WHERE id NOT IN (");
     if (sqlite3_open("/home/pi/coap.db", &db) != SQLITE_OK)
     {
         std::cerr << "Errore apertura database: " << sqlite3_errmsg(db) << std::endl;
