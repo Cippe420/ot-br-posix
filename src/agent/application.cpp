@@ -194,7 +194,7 @@ otbrError Application::Run(void)
                 lastTime = currentTime;
                 otbrLogInfo("Checking sensors state...");
                 // check the sensors state
-                mHost->CheckSensorsState(devicesMrloc16);
+                mHost->CheckSensorsState();
             }
 #if __linux__
             {
