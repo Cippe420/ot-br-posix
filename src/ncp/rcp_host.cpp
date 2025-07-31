@@ -701,44 +701,15 @@ const char *RcpHost::GetThreadVersion(void)
     return version;
 }
 
-void RcpHost::CheckSensorsState(std::vector<uint16_t> devicesMrloc16)
+// this does not work, must be done with a database
+void RcpHost::CheckSensorsState()
 {
-    otError      error = OT_ERROR_NONE;
-    otChildInfo  childInfo;
-    uint16_t     childId, maxChildren;
-    otRouterInfo routerInfo;
-    uint16_t     routerId;
-    uint8_t      maxRouterId;
-
-    maxChildren = otThreadGetMaxAllowedChildren(mInstance);
-
-    for (uint16_t i = 0; i < maxChildren; i++)
-    {
-        error = otThreadGetChildInfoByIndex(mInstance, i, &childInfo);
-        if (error == OT_ERROR_NONE)
-        {
-            childId = childInfo.mRloc16;
-            std::cerr << "childId: " << childId << std::endl;
-            devicesMrloc16.push_back(childId);
-        }
-    }
-
-    maxRouterId = otThreadGetMaxRouterId(mInstance);
-    for (uint8_t i = 0; i < maxRouterId; i++)
-    {
-        error = otThreadGetRouterInfo(mInstance, i, &routerInfo);
-        if (error == OT_ERROR_NONE)
-        {
-            routerId = routerInfo.mRloc16;
-            std::cerr << "routerId: " << routerId << std::endl;
-            devicesMrloc16.push_back(routerId);
-        }
-    }
-
     Database db("home/pi/coap.db");
+    // get the current time
+    std::time_t currentTime = std::time(0);
     if (db.connect())
     {
-        db.SetSensorsState(devicesMrloc16);
+        db.SetSensorsState(currentTime);
     }
     else
     {

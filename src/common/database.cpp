@@ -245,69 +245,59 @@ std::vector<uint64_t> Database::GetEuiSensors()
 }
 
 // TODO: automatically sets the table,remove the packet routine
-void Database::SetSensorsState(std::vector<uint16_t> devicesMrloc16)
+void Database::SetSensorsState(time_t currentTime)
 {
-    if (devicesMrloc16.empty())
-    {
-        std::cerr << "Nessun dispositivo trovato per aggiornare lo stato dei sensori." << std::endl;
-        return;
-    }
+    sqlite3_stmt *stmt;
+    // query the last received packet for each sensor
+    std::string lastPacketsQuery("SELECT eui, MAX(timestamp) FROM data GROUP BY eui;");
 
-    std::string statement("UPDATE sensors SET state = CASE WHEN id IN (");
-    // if (sqlite3_open("/home/pi/coap.db", &db) != SQLITE_OK)
-    // {
-    //     std::cerr << "Errore apertura database: " << sqlite3_errmsg(db) << std::endl;
-    //     return;
-    // }
-
-    for (size_t i = 0; i < devicesMrloc16.size(); i++)
-    {
-        statement += std::to_string(devicesMrloc16[i]);
-        if (CheckNewSensor(devicesMrloc16[i]) == false)
-        {
-            InsertSensor(devicesMrloc16[i]);
-        }
-        else
-        {
-            // Set sensor state to active
-        }
-
-        if (i != devicesMrloc16.size() - 1)
-        {
-            statement += ",";
-        }
-    }
-    statement += ") THEN 'active' ELSE 'dead' END;";
-    std::cerr << "query da eseguire: " << statement << std::endl;
-    //
-    // if (sqlite3_exec(db, statement.c_str(), nullptr, nullptr, nullptr) != SQLITE_OK)
-    // {
-    //     std::cerr << "Errore preparazione query setSensorsState: " << sqlite3_errmsg(db) << std::endl;
-    //     sqlite3_close(db);
-    //     return;
-    // }
     if (sqlite3_open("/home/pi/coap.db", &db) != SQLITE_OK)
     {
         std::cerr << "Errore apertura database: " << sqlite3_errmsg(db) << std::endl;
         return;
     }
 
-    if (db == nullptr)
+    if (sqlite3_prepare_v2(db, lastPacketsQuery.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
     {
-        std::cerr << "Database non connesso." << std::endl;
+        std::cerr << "Errore preparazione query SetSensorsState: " << sqlite3_errmsg(db) << std::endl;
+        sqlite3_close(db);
         return;
     }
 
-    if (sqlite3_exec(db, statement.c_str(), nullptr, nullptr, nullptr) != SQLITE_OK)
+    // per ogni riga della tabella, aggiorna lo stato del sensore (puo essere piu efficiente se
+    // fatto in un'unica query)
+    while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        std::cerr << "Errore esecuzione query setSensorsState: " << sqlite3_errmsg(db) << std::endl;
-    }
-    else
-    {
-        std::cout << "Stato dei sensori aggiornato con successo!" << std::endl;
-    }
+        uint64_t eui       = sqlite3_column_int64(stmt, 0);
+        time_t   timestamp = sqlite3_column_int(stmt, 1);
 
-    sqlite3_close(db);
+        // check if the sensor is active or not
+        std::string updateQuery;
+        if (currentTime - timestamp < 60) // 1 hour
+        {
+            updateQuery = "UPDATE sensors SET state = 'active' WHERE id = '" + std::to_string(eui) + "';";
+        }
+        else
+        {
+            updateQuery = "UPDATE sensors SET state = 'inactive' WHERE id = '" + std::to_string(eui) + "';";
+        }
+
+        sqlite3_stmt *updateStmt;
+        if (sqlite3_prepare_v2(db, updateQuery.c_str(), -1, &updateStmt, nullptr) != SQLITE_OK)
+        {
+            std::cerr << "Errore preparazione query SetSensorsState: " << sqlite3_errmsg(db) << std::endl;
+            sqlite3_finalize(stmt);
+            sqlite3_close(db);
+            return;
+        }
+
+        if (sqlite3_step(updateStmt) != SQLITE_DONE)
+        {
+            std::cerr << "Errore esecuzione query SetSensorsState: " << sqlite3_errmsg(db) << std::endl;
+        }
+
+        sqlite3_finalize(updateStmt);
+    }
 }
 
 void Database::printError()

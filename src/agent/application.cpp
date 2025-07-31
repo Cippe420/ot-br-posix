@@ -40,8 +40,8 @@
 #include "agent/application.hpp"
 #include "common/code_utils.hpp"
 #include "common/mainloop_manager.hpp"
-#include "utils/infra_link_selector.hpp"
 #include "openthread/coap.h"
+#include "utils/infra_link_selector.hpp"
 
 namespace otbr {
 
@@ -98,7 +98,7 @@ void Application::Init(void)
     }
 
     // start coap resources on the server
-    //StartCoapResources();
+    // StartCoapResources();
 
     otbrLogInfo("Co-processor version: %s", mHost->GetCoprocessorVersion());
 }
@@ -106,9 +106,8 @@ void Application::Init(void)
 // calling this starts a set of coap resources
 void Application::StartCoapResource()
 {
-    mHost->StartCoapServer();   
+    mHost->StartCoapServer();
 }
-
 
 void Application::Deinit(void)
 {
@@ -159,7 +158,7 @@ otbrError Application::Run(void)
     // allow quitting elegantly
     signal(SIGTERM, HandleSignal);
 
-    time_t lastTime = time(0);
+    time_t                lastTime = time(0);
     std::vector<uint16_t> devicesMrloc16;
 
     while (!sShouldTerminate)
@@ -173,7 +172,7 @@ otbrError Application::Run(void)
         FD_ZERO(&mainloop.mReadFdSet);
         FD_ZERO(&mainloop.mWriteFdSet);
         FD_ZERO(&mainloop.mErrorFdSet);
-        
+
         MainloopManager::GetInstance().Update(mainloop);
 
         rval = select(mainloop.mMaxFd + 1, &mainloop.mReadFdSet, &mainloop.mWriteFdSet, &mainloop.mErrorFdSet,
@@ -182,12 +181,11 @@ otbrError Application::Run(void)
         if (rval >= 0)
         {
             MainloopManager::GetInstance().Process(mainloop);
-            // while processing the mainloops, the app could check if the sensors are still alive, by checking the table of nodes,
-            // i.e calling the cli api to get router table and child table, this might not return every node of the network
-            // like a child connected to a router
-            // otherwise it can check the last time he received a message from every sensor and compare with actual time
-            // if the time is too long, it can assume that the sensor is not alive anymore
-            //
+            // while processing the mainloops, the app could check if the sensors are still alive, by checking the table
+            // of nodes, i.e calling the cli api to get router table and child table, this might not return every node
+            // of the network like a child connected to a router since the border router doesnt have a full view of the
+            // network, each router node should send their childrens to the border router so that the border router can
+            // check if the sensors are still alive
             time_t currentTime = time(0);
 
             // check the sensor state every 10 seconds
@@ -339,9 +337,8 @@ void Application::InitNcpMode(void)
 
 void Application::DeinitNcpMode(void)
 {
-	/* empty */
+    /* empty */
 }
 
-}
+} // namespace otbr
 // namespace otbr
-

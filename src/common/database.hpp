@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 
-
 // Database Manager instance
 class Database
 {
@@ -19,16 +18,16 @@ public:
     Database(const std::string &db_name);
     ~Database();
 
-    bool        connect(void);
-    void        disconnect(void);
-    int         CreateTables(void);
-    const char *InsertData(Payload payload);
-    bool        CheckNewSensor(uint16_t eui);
-    void        InsertSensor(uint16_t eui);
-    void        SetSensorsState(std::vector<uint16_t> mRloc16);
+    bool                  connect(void);
+    void                  disconnect(void);
+    int                   CreateTables(void);
+    const char           *InsertData(Payload payload);
+    bool                  CheckNewSensor(uint16_t eui);
+    void                  InsertSensor(uint16_t eui);
+    void                  SetSensorsState(time_t currentTime);
     std::vector<uint64_t> GetEuiSensors(void);
-    
-    void        printError(void);
+
+    void printError(void);
 };
 
 #endif

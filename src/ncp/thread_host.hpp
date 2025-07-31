@@ -145,8 +145,8 @@ public:
     virtual void SetNetworkParameters(void) = 0;
 
     // starts the coap resources and handlers
-    virtual void StartCoapServer(void) = 0;
-    virtual void CheckSensorsState(std::vector<uint16_t> devicesMrloc16) = 0;
+    virtual void StartCoapServer(void)   = 0;
+    virtual void CheckSensorsState(void) = 0;
     /**
      * Returns the co-processor version string.
      */

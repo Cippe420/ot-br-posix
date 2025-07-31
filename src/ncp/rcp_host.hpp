@@ -45,11 +45,11 @@
 #include <openthread/cli.h>
 #include <openthread/instance.h>
 #include <openthread/openthread-system.h>
-#include "openthread/coap.h"
 #include "common/mainloop.hpp"
 #include "common/task_runner.hpp"
 #include "common/types.hpp"
 #include "ncp/thread_host.hpp"
+#include "openthread/coap.h"
 #include "utils/thread_helper.hpp"
 
 namespace otbr {
@@ -118,11 +118,11 @@ public:
 
     void StartCoapServer(void) override;
 
-    void CheckSensorsState(std::vector<uint16_t> devicesMrloc16) override;
+    void CheckSensorsState(void) override;
 
-    static void HandleRequest(void *aContext,otMessage *aMessage,const otMessageInfo *aMessageInfo);
+    static void HandleRequest(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo);
 
-    void HandleRequest(otMessage *aMessage,const otMessageInfo *aMessageInfo);
+    void HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageInfo);
 
     void PrintIntoFile(void);
 
@@ -206,10 +206,7 @@ public:
      *
      * @returns the applied FeatureFlagList's serialized bytes.
      */
-    const std::string &GetAppliedFeatureFlagListBytes(void)
-    {
-        return mAppliedFeatureFlagListBytes;
-    }
+    const std::string &GetAppliedFeatureFlagListBytes(void) { return mAppliedFeatureFlagListBytes; }
 #endif
 
     ~RcpHost(void) override;
@@ -220,15 +217,9 @@ public:
     void ScheduleMigration(const otOperationalDatasetTlvs &aPendingOpDatasetTlvs,
                            const AsyncResultReceiver       aReceiver) override;
 
-    CoprocessorType GetCoprocessorType(void) override
-    {
-        return OT_COPROCESSOR_RCP;
-    }
+    CoprocessorType GetCoprocessorType(void) override { return OT_COPROCESSOR_RCP; }
 
-    const char *GetCoprocessorVersion(void) override
-    {
-        return otPlatRadioGetVersionString(mInstance);
-    }
+    const char *GetCoprocessorVersion(void) override { return otPlatRadioGetVersionString(mInstance); }
 
 private:
     static void HandleStateChanged(otChangedFlags aFlags, void *aContext)

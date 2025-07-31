@@ -102,7 +102,7 @@ void NcpHost::Deinit(void)
 
 void NcpHost::SetNetworkParameters(void)
 {
-	/*empty*/
+    /*empty*/
 }
 
 void NcpHost::StartCoapServer(void)
@@ -110,29 +110,23 @@ void NcpHost::StartCoapServer(void)
     /*empty*/
 }
 
-void NcpHost::CheckSensorsState(std::vector<uint16_t> devicesMrloc16)
+void NcpHost::CheckSensorsState()
 {
-	/*empty*/
-	OT_UNUSED_VARIABLE(devicesMrloc16);
+    /*empty*/
 }
 
-void NcpHost::HandleRequest(void *aContext,otMessage *aMessage,const otMessageInfo *aMessageInfo)
+void NcpHost::HandleRequest(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo)
 {
     OT_UNUSED_VARIABLE(aContext);
     OT_UNUSED_VARIABLE(aMessage);
     OT_UNUSED_VARIABLE(aMessageInfo);
-
 }
 
-void NcpHost::HandleRequest(otMessage *aMessage,const otMessageInfo *aMessageInfo)
+void NcpHost::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageInfo)
 {
     OT_UNUSED_VARIABLE(aMessage);
     OT_UNUSED_VARIABLE(aMessageInfo);
-
-
 }
-
-
 
 void NcpHost::Join(const otOperationalDatasetTlvs &aActiveOpDatasetTlvs, const AsyncResultReceiver &aReceiver)
 {

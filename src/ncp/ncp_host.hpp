@@ -95,10 +95,10 @@ public:
 
     void SetNetworkParameters(void) override;
     void StartCoapServer(void) override;
-    void CheckSensorsState(std::vector<uint16_t> devicesMrloc16) override;
-    
-    void HandleRequest(void *aContext,otMessage *aMessage,const otMessageInfo *aMessageInfo);
-    void HandleRequest(otMessage *aMessage,const otMessageInfo *aMessageInfo);
+    void CheckSensorsState(void) override;
+
+    void HandleRequest(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo);
+    void HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageInfo);
 
     // MainloopProcessor methods
     void Update(MainloopContext &aMainloop) override;
